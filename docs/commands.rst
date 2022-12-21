@@ -1,10 +1,22 @@
 Commands
 ========
 
-The Makefile contains the central entry points for common tasks related to this project.
+.. click:: src.pipeline:pipeline
+  :prog: pipeline
+  :nested: full
 
-Syncing data to S3
-^^^^^^^^^^^^^^^^^^
+.. click:: src.data.data:data
+  :prog: data
+  :nested: full
 
-* `make sync_data_to_s3` will use `aws s3 sync` to recursively sync files in `data/` up to `s3://[OPTIONAL] your-bucket-for-syncing-data (do not include 's3://')/data/`.
-* `make sync_data_from_s3` will use `aws s3 sync` to recursively sync files from `s3://[OPTIONAL] your-bucket-for-syncing-data (do not include 's3://')/data/` to `data/`.
+.. click:: src.features.features:features
+  :prog: features
+  :nested: full
+
+.. click:: src.models.models:models
+  :prog: models
+  :nested: full
+
+.. click:: src.visualization.visualization:visualization
+  :prog: visualization
+  :nested: full

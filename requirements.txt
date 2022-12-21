@@ -1,10 +1,22 @@
 # local package
 -e .
 
+# requirements
+
+
+# dev requirements
+black
+isort
+awscli
+
 # external requirements
 click
+tqdm
 Sphinx
-coverage
-awscli
-flake8
+myst-parser
+sphinx-rtd-theme
+sphinxcontrib-mermaid
 python-dotenv>=0.5.1
+
+# backwards compatibility
+pathlib2
