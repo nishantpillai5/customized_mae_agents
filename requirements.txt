@@ -2,7 +2,7 @@
 -e .
 
 # requirements
-
+pettingzoo[mpe]
 
 # dev requirements
 black

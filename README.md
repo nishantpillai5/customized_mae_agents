@@ -2,12 +2,11 @@
 
 This is currently nothing, and will become something
 
-
 ## Setting up the environment
 
-[Anaconda](https://www.anaconda.com/) is required to create virtual environments.
+[Anaconda](https://www.anaconda.com/) is required to create dev environment.
 
-- Create new environments for the project
+- Create new environment for the project
 
   ```
   make create_environment
@@ -40,3 +39,11 @@ The `Makefile` and `setup.py` contains the central entry points for common tasks
 | `features`      | Pre-process raw data.   |
 | `models`        | Run inference.          |
 | `visualization` | Visualize results.      |
+
+## Temporary env setup
+
+```
+make create_environment
+conda activate ./env
+pip install pettingzoo[mpe]
+```
