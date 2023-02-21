@@ -1,6 +1,6 @@
 # Repo
 
-Short Description
+This is currently nothing, and will become something
 
 
 ## Setting up the environment
@@ -40,4 +40,3 @@ The `Makefile` and `setup.py` contains the central entry points for common tasks
 | `features`      | Pre-process raw data.   |
 | `models`        | Run inference.          |
 | `visualization` | Visualize results.      |
-
