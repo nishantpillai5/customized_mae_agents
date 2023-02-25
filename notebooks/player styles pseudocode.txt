@@ -79,3 +79,14 @@ How to beat this player:
 _________________________________________________________________________________________
 Player D: AI vs AI test
 This is a replica of the originally intended test for this environment, applied to our settings.
+
+_________________________________________________________________________________________
+Dummy Player
+
+
+Getting the vector:
+- Get closest player or obstacle
+- Find direction to get away from them
+
+At every frame:
+- Follow vector
