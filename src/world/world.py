@@ -24,10 +24,11 @@ def run(ctx):
         List of filepaths
     """
 
-    from pettingzoo.mpe import simple_tag_v2
+    from src.world import world_utils
+    
     cycles = 200
+    env = world_utils.env(render_mode="human", max_cycles=cycles)
 
-    env = simple_tag_v2.env(render_mode="human", max_cycles=cycles)
     env.reset()
     current_cycle = 0
     agent_count = 4  # todo: get from env
