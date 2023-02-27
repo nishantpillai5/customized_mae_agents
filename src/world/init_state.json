@@ -1,8 +1,8 @@
 {
-  "landmarks_positions": [(.05, .05), (.95, .05), (.95, .05), (.95, .95), (.3, .5), (.32, .6), (.5, .57), (.58, .55), (.62, .47)],
-  "adversaries_positions": [(.25, .2), (.375, .35), (.5, .2), (.675, .35), (.85, .2)],
-  "good_agent_position": (.5, .85),
-  "landmarks_size": .05,
-  "adversaries_size": .02,
-  "good_agent_size": .015
+  "landmarks_positions": [[0.05, 0.05], [0.95, 0.05], [0.95, 0.05], [0.95, 0.95], [0.3, 0.5], [0.32, 0.6], [0.5, 0.57], [0.58, 0.55], [0.62, 0.47]],
+  "adversaries_positions": [[0.25, 0.2], [0.375, 0.35], [0.5, 0.2], [0.675, 0.35], [0.85, 0.2]],
+  "good_agent_position": [0.5, 0.85],
+  "landmarks_size": 0.05,
+  "adversaries_size": 0.02,
+  "good_agent_size": 0.015
 }

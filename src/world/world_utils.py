@@ -1,5 +1,6 @@
 import numpy as np
 from gymnasium.utils import EzPickle
+import json
 
 from pettingzoo.utils.conversions import parallel_wrapper_fn
 
@@ -7,13 +8,14 @@ from pettingzoo.mpe._mpe_utils.core import Agent, Landmark, World
 from pettingzoo.mpe._mpe_utils.scenario import BaseScenario
 from pettingzoo.mpe._mpe_utils.simple_env import SimpleEnv, make_env
 
+from src.utils import get_project_root
+
 
 class raw_env(SimpleEnv, EzPickle):
     def __init__(
         self,
         num_good=1,
         num_adversaries=3,
-        num_obstacles=2,
         max_cycles=25,
         continuous_actions=False,
         render_mode=None,
@@ -22,13 +24,12 @@ class raw_env(SimpleEnv, EzPickle):
             self,
             num_good,
             num_adversaries,
-            num_obstacles,
             max_cycles,
             continuous_actions,
             render_mode,
         )
         scenario = Scenario()
-        world = scenario.make_world(num_good, num_adversaries, num_obstacles)
+        world = scenario.make_world(num_good, num_adversaries)
         super().__init__(
             scenario=scenario,
             world=world,
@@ -39,12 +40,19 @@ class raw_env(SimpleEnv, EzPickle):
         self.metadata["name"] = "simple_tag_v2"
 
 
+
 env = make_env(raw_env)
 parallel_env = parallel_wrapper_fn(env)
 
 
 class Scenario(BaseScenario):
-    def make_world(self, num_good=1, num_adversaries=3, num_obstacles=2):
+    def make_world(self, num_good=1, num_adversaries=3): # num obstancles read from json
+        with open(get_project_root(plus="src/world/init_state.json")) as f:
+            self.init_state =  json.load(f)
+            self.init_state["landmarks_positions_transformed"] = (np.asarray(self.init_state["landmarks_positions"])*2)-1
+
+        num_obstacles = len(self.init_state["landmarks_positions"])
+
         world = World()
         # set any world properties first
         world.dim_c = 2
@@ -64,13 +72,14 @@ class Scenario(BaseScenario):
             agent.size = 0.075 if agent.adversary else 0.05
             agent.accel = 3.0 if agent.adversary else 4.0
             agent.max_speed = 1.0 if agent.adversary else 1.3
+
         # add landmarks
         world.landmarks = [Landmark() for i in range(num_landmarks)]
         for i, landmark in enumerate(world.landmarks):
             landmark.name = "landmark %d" % i
             landmark.collide = True
             landmark.movable = False
-            landmark.size = 0.2
+            landmark.size = self.init_state["landmarks_size"]
             landmark.boundary = False
         return world
 
@@ -92,7 +101,7 @@ class Scenario(BaseScenario):
             agent.state.c = np.zeros(world.dim_c)
         for i, landmark in enumerate(world.landmarks):
             if not landmark.boundary:
-                landmark.state.p_pos = np_random.uniform(-0.9, +0.9, world.dim_p)
+                landmark.state.p_pos = self.init_state["landmarks_positions_transformed"][i]
                 landmark.state.p_vel = np.zeros(world.dim_p)
 
     def benchmark_data(self, agent, world):
