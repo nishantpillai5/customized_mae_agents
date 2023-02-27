@@ -48,10 +48,10 @@ parallel_env = parallel_wrapper_fn(env)
 class Scenario(BaseScenario):
     def make_world(self, num_good=1, num_adversaries=3): # num obstancles read from json
         with open(get_project_root(plus="src/world/init_state.json")) as f:
-            self.init_state =  json.load(f)
-            self.init_state["landmarks_positions_transformed"] = (np.asarray(self.init_state["landmarks_positions"])*2)-1
+            self.init_state = json.load(f)
+            self.init_state["landmarks"]["transformed_pos"] = (np.asarray(self.init_state["landmarks"]["pos"])*2)-1
 
-        num_obstacles = len(self.init_state["landmarks_positions"])
+        num_obstacles = len(self.init_state["landmarks"]["pos"])
 
         world = World()
         # set any world properties first
@@ -69,9 +69,10 @@ class Scenario(BaseScenario):
             agent.name = f"{base_name}_{base_index}"
             agent.collide = True
             agent.silent = True
-            agent.size = 0.075 if agent.adversary else 0.05
-            agent.accel = 3.0 if agent.adversary else 4.0
-            agent.max_speed = 1.0 if agent.adversary else 1.3
+
+            agent.size = self.init_state[base_name]["size"] 
+            agent.accel = self.init_state[base_name]["accel"]
+            agent.max_speed = self.init_state[base_name]["max_speed"]
 
         # add landmarks
         world.landmarks = [Landmark() for i in range(num_landmarks)]
@@ -79,7 +80,7 @@ class Scenario(BaseScenario):
             landmark.name = "landmark %d" % i
             landmark.collide = True
             landmark.movable = False
-            landmark.size = self.init_state["landmarks_size"]
+            landmark.size = self.init_state["landmarks"]["size"]
             landmark.boundary = False
         return world
 
@@ -101,7 +102,7 @@ class Scenario(BaseScenario):
             agent.state.c = np.zeros(world.dim_c)
         for i, landmark in enumerate(world.landmarks):
             if not landmark.boundary:
-                landmark.state.p_pos = self.init_state["landmarks_positions_transformed"][i]
+                landmark.state.p_pos = self.init_state["landmarks"]["transformed_pos"][i]
                 landmark.state.p_vel = np.zeros(world.dim_p)
 
     def benchmark_data(self, agent, world):
