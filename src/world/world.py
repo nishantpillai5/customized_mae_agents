@@ -25,21 +25,25 @@ def run(ctx):
     """
 
     from pettingzoo.mpe import simple_tag_v2
+    cycles = 200
 
-    env = simple_tag_v2.env(render_mode="human")
+    env = simple_tag_v2.env(render_mode="human", max_cycles=cycles)
     env.reset()
-
-    for _ in range(200):
+    current_cycle = 0
+    agent_count = 4  # todo: get from env
+    for agent in env.agent_iter():
+        if current_cycle >= cycles * agent_count:
+            break
+        action = random.choice([0, 1, 2, 3, 4])
+        # print(agent)
         env.render()
-        # time.sleep(1/20)
-        # n_state, reward, done, info = env.step(action)
-        for agent in env.agent_iter():
-            action = random.choice([0,1,2,3,4])
-            #print(agent)
-            env.render()
-            # obs, reward, done, info = env.last()
-            observation, cumulative_rewards, terminations, truncations, infos = env.last()
-            env.step(3)
+        # obs, reward, done, info = env.last()
+        observation, cumulative_rewards, terminations, truncations, infos = env.last()
+        try:
+            env.step(action)
+        except Exception:
+            print(current_cycle)
+        current_cycle += 1
 
         # Following this but it's not working: https://github.com/openai/multiagent-particle-envs/issues/76
         # score+=reward
