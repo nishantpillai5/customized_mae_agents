@@ -31,18 +31,29 @@ def run(ctx):
     env.reset()
     current_cycle = 0
     agent_count = 4  # todo: get from env
+    action_queue = []
+
     for agent in env.agent_iter():
         if current_cycle >= cycles * agent_count:
             break
-        action = random.choice([0, 1, 2, 3, 4])
+        if current_cycle % agent_count == 0:
+            adversary_0_action = random.choice([0, 1, 2, 3, 4])
+            adversary_1_action = random.choice([0, 1, 2, 3, 4])
+            adversary_2_action = random.choice([0, 1, 2, 3, 4])
+            good_agent_action = random.choice([0, 1, 2, 3, 4])
+
+            action_queue += [
+                adversary_0_action,
+                adversary_1_action,
+                adversary_2_action,
+                good_agent_action
+            ]
         # print(agent)
         env.render()
         # obs, reward, done, info = env.last()
         observation, cumulative_rewards, terminations, truncations, infos = env.last()
-        try:
-            env.step(action)
-        except Exception:
-            print(current_cycle)
+        action = action_queue.pop(0)
+        env.step(action)
         current_cycle += 1
 
         # Following this but it's not working: https://github.com/openai/multiagent-particle-envs/issues/76
