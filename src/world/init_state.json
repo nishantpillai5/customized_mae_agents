@@ -1,0 +1,8 @@
+{
+  "landmarks_positions": [(.05, .05), (.95, .05), (.95, .05), (.95, .95), (.3, .5), (.32, .6), (.5, .57), (.58, .55), (.62, .47)],
+  "adversaries_positions": [(.25, .2), (.375, .35), (.5, .2), (.675, .35), (.85, .2)],
+  "good_agent_position": (.5, .85),
+  "landmarks_size": .05,
+  "adversaries_size": .02,
+  "good_agent_size": .015
+}
