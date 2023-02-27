@@ -9,10 +9,7 @@ setup(
     ],
     entry_points={
         "console_scripts": [
-            "data = src.data.data:data",
-            "features = src.features.features:features",
-            "models = src.models.models:models",
-            "visualization = src.visualization.visualization:visualization",
+            "world = src.world.world:world",
             "pipeline = src.pipeline:pipeline",
         ],
     },
