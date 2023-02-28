@@ -82,7 +82,8 @@ delete_environment:
 requirements: test_environment
 	$(CONDA_ACTIVATE) ./$(ENV_DIR)
 	@echo ">>> Installing pip dependencies."
-	pip install --no-deps -r requirements_freezed.txt
+	pip install -r requirements.txt
+	# pip install --no-deps -r requirements_freezed.txt
 	# $(PYTHON_INTERPRETER) -m pip install -U pip setuptools wheel
 	# $(PYTHON_INTERPRETER) -m pip install -r requirements.txt
 

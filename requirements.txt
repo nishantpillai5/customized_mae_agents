@@ -13,6 +13,7 @@ awscli
 click
 tqdm
 Sphinx
+sphinx-click
 myst-parser
 sphinx-rtd-theme
 sphinxcontrib-mermaid
