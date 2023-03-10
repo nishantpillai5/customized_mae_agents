@@ -3,11 +3,19 @@
 
 # requirements
 pettingzoo[mpe]
+ray[rllib]
+pandas
+
+--extra-index-url https://download.pytorch.org/whl/cu116
+torch 
+torchvision 
+torchaudio 
 
 # dev requirements
 black
 isort
 awscli
+ipykernel
 
 # external requirements
 click
