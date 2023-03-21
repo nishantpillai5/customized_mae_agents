@@ -17,11 +17,11 @@ alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 def make_env(raw_env):
     def env(**kwargs):
         env = raw_env(**kwargs)
-        if env.continuous_actions:
-            env = wrappers.ClipOutOfBoundsWrapper(env)
-        else:
-            env = wrappers.AssertOutOfBoundsWrapper(env)
-        env = wrappers.OrderEnforcingWrapper(env)
+        # if env.continuous_actions:
+            # env = wrappers.ClipOutOfBoundsWrapper(env)
+        # else:
+            # env = wrappers.AssertOutOfBoundsWrapper(env)
+        # env = wrappers.OrderEnforcingWrapper(env)
         return env
 
     return env

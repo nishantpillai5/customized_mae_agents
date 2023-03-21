@@ -206,7 +206,7 @@ class Scenario(BaseScenario):
                 continue
             comm.append(other.state.c)
             other_pos.append(other.state.p_pos - agent.state.p_pos)
-            if not other.adversary:
+            if not other.adversary or True: # Make observations same for both
                 other_vel.append(other.state.p_vel)
         return np.concatenate(
             [agent.state.p_vel]
