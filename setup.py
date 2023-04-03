@@ -10,6 +10,7 @@ setup(
     entry_points={
         "console_scripts": [
             "world = src.world.world:world",
+            "adversary = src.agent.adversary:adversary",
             "pipeline = src.pipeline:pipeline",
         ],
     },

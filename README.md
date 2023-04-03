@@ -1,6 +1,6 @@
 # Repo
 
-This is currently nothing, and will become something
+This is currently becoming something
 
 ## Setting up the environment
 
@@ -10,6 +10,7 @@ This is currently nothing, and will become something
 
   ```
   make create_environment
+  make requirements
   ```
 
 - Activate created or existing environment
@@ -35,15 +36,13 @@ The `Makefile` and `setup.py` contains the central entry points for common tasks
 | Command         | Description             |
 | --------------- | ----------------------- |
 | `pipeline`      | Run entire pipeline.    |
-| `data`          | Process raw data.       |
-| `features`      | Pre-process raw data.   |
-| `models`        | Run inference.          |
-| `visualization` | Visualize results.      |
+| `world`         | Visualize world.        |
+| `adversary`     | Adversary tests.        |
 
-## Temporary env setup
+# Windows Guide
 
 ```
-make create_environment
+conda env create --prefix ./$(ENV_DIR) --file environment.yml
 conda activate ./env
-pip install pettingzoo[mpe]
+pip install --no-deps -r requirements_freezed_linux_0304.txt
 ```

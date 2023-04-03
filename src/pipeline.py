@@ -4,14 +4,10 @@ from pathlib import Path
 
 import click
 
-from src.data.data import run as data_run
-from src.features.features import run as features_run
-from src.models.models import run as models_run
 from src.utils import get_files, get_logging_conf, get_project_root
 
 logging.config.dictConfig(get_logging_conf())
 logger = logging.getLogger("pipeline")
-
 
 @click.group()
 def pipeline():
