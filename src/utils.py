@@ -1,6 +1,10 @@
+import datetime
 import glob
 import os
 from pathlib import Path
+
+import yaml
+from pathvalidate import sanitize_filename
 
 
 def get_project_root(plus=None):
@@ -55,51 +59,12 @@ def get_logfile_path(log_filename):
     return os.path.join(get_project_root(), "logs", f"{log_filename}.log")
 
 
-def get_logging_conf():
-    """Returns logging configuration
-
-    Returns
-    -------
-    dict
-        logging configuration
-    """
-    return {
-        "version": 1,
-        "disable_existing_loggers": False,
-        "formatters": {
-            "standard": {"format": "%(asctime)s [%(levelname)s] %(name)s: %(message)s"},
-        },
-        "loggers": {
-            "": {  # root logger
-                "handlers": ["default"],
-                "level": "WARNING",
-                "propagate": False,
-            },
-            "pipeline": {
-                "handlers": ["default", "pipeline_file"],
-                "level": "INFO",
-                "propagate": False,
-            },
-            "__main__": {  # if __name__ == '__main__'
-                "handlers": ["default"],
-                "level": "DEBUG",
-                "propagate": False,
-            },
-        },
-        "handlers": {
-            "default": {
-                "level": "INFO",
-                "formatter": "standard",
-                "class": "logging.StreamHandler",
-                "stream": "ext://sys.stdout",  # Default is stderr
-            },
-            "pipeline_file": {
-                "level": "INFO",
-                "formatter": "standard",
-                "class": "logging.handlers.RotatingFileHandler",
-                "filename": get_logfile_path("pipeline"),
-                "maxBytes": 10485760,
-                "backupCount": 10,
-            },
-        },
-    }
+def get_logging_conf(filename=None):
+    with open(get_project_root("logs/config.yaml"), "rt") as f:
+        config = yaml.safe_load(f.read())
+    if filename is not None:
+        filename += "_" + str(datetime.datetime.now())
+        filename = sanitize_filename(filename)
+        config["handlers"]["file"]["filename"] = f"logs/{filename}.log"
+        config["handlers"]["r_file"]["filename"] = f"logs/{filename}.log"
+    return config

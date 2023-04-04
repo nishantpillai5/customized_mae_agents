@@ -1,25 +1,25 @@
-import random
 import math
+import random
+from collections import deque, namedtuple
 
 import torch
 import torch.nn as nn
-import torch.optim as optim
 import torch.nn.functional as F
+import torch.optim as optim
+from src.agent.constants import BATCH_SIZE, EPS_DECAY, EPS_END, EPS_START, GAMMA, device
 
-from collections import namedtuple, deque
-from src.agent.constants import BATCH_SIZE, EPS_DECAY, EPS_START, EPS_END, GAMMA
+Transition = namedtuple("Transition", ("state", "action", "next_state", "reward"))
 
-from src.agent.constants import device
-
-Transition = namedtuple('Transition', ('state', 'action', 'next_state', 'reward'))
 
 class StateCache:
     def __init__(self):
         self.value = {}
 
     def save_state(self, agent, ns, reward):
-        self.value[agent] = {"obs": torch.tensor(ns, dtype=torch.float32, device=device).unsqueeze(0),
-                            "reward": torch.tensor([reward], device=device)}
+        self.value[agent] = {
+            "obs": torch.tensor(ns, dtype=torch.float32, device=device).unsqueeze(0),
+            "reward": torch.tensor([reward], device=device),
+        }
 
     def get_state(self, agent):
         return self.value[agent]["obs"], self.value[agent]["reward"]
@@ -27,6 +27,7 @@ class StateCache:
     def deal_state(self, agent, ns, reward):
         self.save_state(agent, ns, reward)
         return self.get_state(agent)
+
 
 class ReplayMemory(object):
     def __init__(self, capacity):
@@ -42,8 +43,8 @@ class ReplayMemory(object):
     def __len__(self):
         return len(self.memory)
 
-class DQN(nn.Module):
 
+class DQN(nn.Module):
     def __init__(self, n_observations, n_actions):
         super(DQN, self).__init__()
         self.layer1 = nn.Linear(n_observations, 128)
@@ -56,7 +57,7 @@ class DQN(nn.Module):
         x = F.relu(self.layer1(x))
         x = F.relu(self.layer2(x))
         return self.layer3(x)
-    
+
 
 def optimize_model(optimizer, memory, policy_net, target_net):
     if len(memory) < BATCH_SIZE:
@@ -69,10 +70,12 @@ def optimize_model(optimizer, memory, policy_net, target_net):
 
     # Compute a mask of non-final states and concatenate the batch elements
     # (a final state would've been the one after which simulation ended)
-    non_final_mask = torch.tensor(tuple(map(lambda s: s is not None,
-                                        batch.next_state)), device=device, dtype=torch.bool)
-    non_final_next_states = torch.cat([s for s in batch.next_state
-                                                if s is not None])
+    non_final_mask = torch.tensor(
+        tuple(map(lambda s: s is not None, batch.next_state)),
+        device=device,
+        dtype=torch.bool,
+    )
+    non_final_next_states = torch.cat([s for s in batch.next_state if s is not None])
     state_batch = torch.cat(batch.state)
     action_batch = torch.cat(batch.action)
     reward_batch = torch.cat(batch.reward)
@@ -104,27 +107,41 @@ def optimize_model(optimizer, memory, policy_net, target_net):
     torch.nn.utils.clip_grad_value_(policy_net.parameters(), 100)
     optimizer.step()
 
+
 def plot_durations(show_result=False):
     durations_t = torch.tensor(episode_durations, dtype=torch.float)
     if torch.max(durations_t) == durations_t[-1]:
         print(name, "::", durations_t[-1])
-    
+
 
 def print_rewards(name, episode_rewards):
     rewards_t = torch.tensor(episode_rewards, dtype=torch.float)
     if torch.max(rewards_t) in rewards_t[-4:]:
-        print(name, "::", rewards_t[-4:])
-        
+        print("rew:", name, rewards_t[-4:])
+    else:
+        print("rew2:", name, rewards_t[-4:])
 
-def select_action(state, policy_net, good_agent=False, steps_done=0, random_action=None, player_action=None):
+
+def select_action(
+    state,
+    policy_net,
+    good_agent=False,
+    steps_done=0,
+    random_action=None,
+    player_action=None,
+):
     if good_agent:
         # TODO: Player strategies
         player_action = random_action
-        return torch.tensor([[player_action]], device=device, dtype=torch.long) , steps_done
+        return (
+            torch.tensor([[player_action]], device=device, dtype=torch.long),
+            steps_done,
+        )
     else:
         sample = random.random()
-        eps_threshold = EPS_END + (EPS_START - EPS_END) * \
-            math.exp(-1. * steps_done / EPS_DECAY)
+        eps_threshold = EPS_END + (EPS_START - EPS_END) * math.exp(
+            -1.0 * steps_done / EPS_DECAY
+        )
         steps_done += 1
         if sample > eps_threshold:
             with torch.no_grad():
@@ -133,6 +150,7 @@ def select_action(state, policy_net, good_agent=False, steps_done=0, random_acti
                 # found, so we pick action with the larger expected reward.
                 return policy_net(state).max(1)[1].view(1, 1), steps_done
         else:
-            return torch.tensor([[random_action]], device=device, dtype=torch.long), steps_done
-        
-        
+            return (
+                torch.tensor([[random_action]], device=device, dtype=torch.long),
+                steps_done,
+            )

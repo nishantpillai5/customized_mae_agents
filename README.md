@@ -39,6 +39,9 @@ The `Makefile` and `setup.py` contains the central entry points for common tasks
 | `world`         | Visualize world.        |
 | `adversary`     | Adversary tests.        |
 
+- `adversary train` to run the training script
+-  logging is done for each ray worker
+
 # Windows Guide
 
 ```
@@ -46,3 +49,10 @@ conda env create --prefix ./$(ENV_DIR) --file environment.yml
 conda activate ./env
 pip install --no-deps -r requirements_freezed_linux_0304.txt
 ```
+
+# TODO
+
+- [x] Log episode rewards
+- [ ] Saving and loading models from file
+- [ ] Player styles
+- [ ] Evaluation

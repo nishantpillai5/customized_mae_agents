@@ -31,7 +31,7 @@ def run(ctx):
 
     env.reset()
     current_cycle = 0
-    agent_count = 4  # todo: get from env
+    agent_count = 4  #TODO: get from env
     action_queue = []
 
     for agent in env.agent_iter():

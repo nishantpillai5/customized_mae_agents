@@ -1,0 +1,45 @@
+version: 1
+
+formatters:
+  simple_formatter:
+    format: "%(asctime)s %(name)s: %(message)s"
+  extended_formatter:
+    format: "%(asctime)s %(name)s %(levelname)s: %(message)s"
+
+loggers:
+    test:
+        level: DEBUG
+        handlers: [console]
+        propagate: False
+    train:
+        level: INFO
+        handlers: [console, r_file]
+        propagate: False
+    write:
+        level: WARNING
+        handlers: [file]
+        propagate: False
+
+handlers:
+  console:
+    class: logging.StreamHandler
+    level: INFO
+    formatter: simple_formatter
+    stream: ext://sys.stdout
+  file:
+    class: logging.FileHandler
+    level: INFO
+    filename: logs/file.log
+    formatter: extended_formatter
+    mode: 'a'
+  r_file:
+    class : logging.handlers.RotatingFileHandler
+    formatter: extended_formatter
+    filename: logs/r_file.log
+    maxBytes: 1024
+    backupCount: 3
+    mode: 'a'
+
+root:
+  handlers: [console, file, r_file]
+  propagate: true
