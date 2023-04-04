@@ -13,8 +13,51 @@ def adversary():
 
 
 @click.command()
+@click.argument("filepaths", nargs=-1)
+@click.option("--visualize","-v", is_flag=True, show_default=True, default=False, help="Visualize")
 @click.pass_context
-def train(ctx):
+def eval(ctx, filepaths, visualize):
+    import torch
+    from src.agent.adversary_utils import DQN
+
+    from src.agent.constants import (
+        MAX_CYCLES,
+        device
+    )
+
+    def env_creator(render_mode="rgb_array"):
+        from src.world import world_utils
+        env = world_utils.env(render_mode=render_mode, 
+                max_cycles=MAX_CYCLES)
+        return env
+
+    env = env_creator(render_mode="human" if visualize else "rgb_array")
+    env.reset()
+    env.render()
+
+    state, _, _, _, _ = env.last()
+    n_observations = len(state)
+
+    policy_net = DQN(n_observations, n_actions).to(device)
+
+    # https://pytorch.org/tutorials/beginner/saving_loading_models.html   
+
+    for filepath in filepaths: # to test all models with one command
+        policy_net.load_state_dict(torch.load(filepath))
+
+        # you must call model.eval() (maybe not needed)
+        # https://pytorch.org/tutorials/recipes/recipes/saving_and_loading_models_for_inference.html#save-and-load-the-model-via-state-dict
+
+        policy_net.eval() 
+        print("Eval: ", filepath)
+
+        # TODO: compute rewards with saved models and log them, maybe use ray for multiple instances
+
+
+@click.command()
+@click.option("--visualize","-v", is_flag=True, show_default=True, default=False, help="Visualize")
+@click.pass_context
+def train(ctx, visualize):
     import random
     from itertools import count
 
@@ -31,6 +74,7 @@ def train(ctx):
     from src.agent.constants import (
         AGENTS,
         EPS_NUM,
+        MAX_CYCLES,
         LR,
         RAY_BATCHES,
         REPLAY_MEM,
@@ -38,10 +82,10 @@ def train(ctx):
         device,
     )
 
-    def env_creator(render_mode="rgb_array", cycles=200):
+    def env_creator(render_mode="rgb_array"):
         from src.world import world_utils
-
-        env = world_utils.env(render_mode=render_mode, max_cycles=cycles)
+        env = world_utils.env(render_mode=render_mode, 
+                max_cycles=MAX_CYCLES)
         return env
 
     import ray
@@ -51,13 +95,16 @@ def train(ctx):
         if not name:
             name = int(random.random() * 10000)
 
-        logging.config.dictConfig(get_logging_conf(f"ad_train_{name}"))
+        worker_config = get_logging_conf(f"ad_train_{name}")
+        logging.config.dictConfig(worker_config)
         logger = logging.getLogger("train")
+
+        filename = config["handlers"]["r_file"]["filename"]
         # Get number of actions from gym action space
         n_actions = 5
         # Get the number of state observations
 
-        env = env_creator(render_mode="human")
+        env = env_creator(render_mode="human" if visualize else "rgb_array")
         env.reset()
         env.render()
 
@@ -132,7 +179,11 @@ def train(ctx):
                     logger.info(f"Ep reward: {episode_rewards[-4:]}")
                     break
 
-        print("Complete")
+        logger.info(f"Complete: {episode_rewards}")
+        # Save model
+        torch.save(policy_net.state_dict(), filename+"_policy.pth")
+        torch.save(target_net.state_dict(), filename+"_target.pth")
+
         return torch.tensor(episode_rewards, dtype=torch.float)
 
     task_handles = []
@@ -148,3 +199,5 @@ def train(ctx):
 
 
 adversary.add_command(train)
+adversary.add_command(eval)
+

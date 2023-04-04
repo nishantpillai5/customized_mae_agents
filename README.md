@@ -53,6 +53,6 @@ pip install --no-deps -r requirements_freezed_linux_0304.txt
 # TODO
 
 - [x] Log episode rewards
-- [ ] Saving and loading models from file
+- [on it] Saving and loading models from file
 - [ ] Player styles
 - [ ] Evaluation
