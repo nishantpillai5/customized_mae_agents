@@ -18,7 +18,7 @@ def adversary():
 @click.pass_context
 def eval(ctx, filepaths, visualize):
     import torch
-    from src.agent.adversary_utils import DQN
+    from src.agent.utils import DQN
 
     from src.agent.constants import (
         MAX_CYCLES,
@@ -63,7 +63,7 @@ def train(ctx, visualize):
 
     import torch
     import torch.optim as optim
-    from src.agent.adversary_utils import (
+    from src.agent.utils import (
         DQN,
         ReplayMemory,
         StateCache,

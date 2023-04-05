@@ -7,6 +7,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 from src.agent.constants import BATCH_SIZE, EPS_DECAY, EPS_END, EPS_START, GAMMA, device
+from src.agent.player import get_player_action
 
 Transition = namedtuple("Transition", ("state", "action", "next_state", "reward"))
 
@@ -131,8 +132,7 @@ def select_action(
     player_action=None,
 ):
     if good_agent:
-        # TODO: Player strategies
-        player_action = random_action
+        player_action = get_player_action(state, strategy=None, override=random_action)
         return (
             torch.tensor([[player_action]], device=device, dtype=torch.long),
             steps_done,
