@@ -13,6 +13,14 @@ EPS_NUM = 10
 
 AGENTS = ["adversary_0", "adversary_1", "adversary_2", "agent_0"]
 
+ACTIONS = {
+    "no_action": 0,
+    "move_left": 1,
+    "move_right": 2,
+    "move_down": 3,
+    "move_up": 4,
+}
+
 RAY_BATCHES = 3
 
 MAX_CYCLES = 400

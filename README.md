@@ -42,6 +42,13 @@ The `Makefile` and `setup.py` contains the central entry points for common tasks
 - `adversary train` to run the training script
 -  logging is done for each ray worker
 
+### Common commands
+
+```
+adversary train -v
+player test ./models/XXX.pth -s random -v
+```
+
 # Windows Guide
 
 ```
@@ -53,7 +60,7 @@ pip install --no-deps -r requirements_freezed_linux_0304.txt
 # TODO
 
 - [x] Log episode rewards
-- [on it] Saving and loading models from file
+- [x] Saving and loading models from file
 - [ ] Player styles
 - [ ] Evaluation
 - [ ] Fix order of rewards

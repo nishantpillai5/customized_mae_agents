@@ -6,12 +6,11 @@ from pprint import pprint
 
 import click
 
+from src.agent.constants import ACTIONS
 from src.utils import get_files, get_logging_conf, get_project_root
 
-ACT = {"no_action": 0, "move_left": 1, "move_right": 2, "move_down": 3, "move_up": 4}
 
-
-def away_from_everything(state):  # Evasive
+def evasive_player(state):
     """
     Player A: Away from everything
     This player's intention is to get away from the enemies or from everythin as quick as possible.
@@ -39,7 +38,7 @@ def away_from_everything(state):  # Evasive
     return None
 
 
-def separate_from_enemies(state):  # Hiding
+def hiding_player(state):
     """
     Player B: Separate from enemies
     This player's intention is to use the group of obstacles as separation from the enemies, so that the enemies are forced to circumnavigate the obstacles.
@@ -68,7 +67,7 @@ def separate_from_enemies(state):  # Hiding
     return None
 
 
-def using_obstacles(state):  # Shifty
+def shifty_player(state):
     """
     Player C: using obstacles to get away
     This player chooses a desired position on the map based on the situation, and then pathfinds towards it
@@ -98,12 +97,7 @@ def using_obstacles(state):  # Shifty
     return None
 
 
-def anti_gravity(state):
-    """ """
-    return None
-
-
-def dqn(state):
+def dqn_player(state):
     """
     Player D: AI vs AI test
     This is a replica of the originally intended test for this environment, applied to our settings.
@@ -111,30 +105,37 @@ def dqn(state):
     return None
 
 
-def dummy(state):
+def dummy_player(state):
     """
     Getting the vector:
     - Get closest player or obstacle
     - Find direction to get away from them
 
     At every frame:
-    - Follow vector`
+    - Follow vector
     """
     return 0
 
 
-def random(state):
-    return random.choice([0, 1, 2, 3, 4])
+def static_player(state):
+    """
+    Doesn't move.
+    """
+    return 0
+
+
+def random_player(state):
+    return random.choice(list(ACTIONS.values()))
 
 
 STRAT = {
-    "away_from_everything": away_from_everything,
-    "separate_from_enemies": separate_from_enemies,
-    "using_obstacles": using_obstacles,
-    "anti_gravity": anti_gravity,
-    "dqn": dqn,
-    "dummy": dummy,
-    "random": random,
+    "evasive": evasive_player,
+    "hiding": hiding_player,
+    "shifty": shifty_player,
+    "dqn": dqn_player,
+    "dummy": dummy_player,
+    "static": static_player,
+    "random": random_player,
 }
 
 
@@ -144,20 +145,20 @@ def get_player_action(state, strategy=None, override=None):
     if strategy is not None:
         action = STRAT[strategy](state)
     else:
-        action = STRAT["dummy"](state)
+        action = STRAT["static"](state)
 
     # boundary check
     if (
         state[0][2].item() < -1
-        and action == ACT["move_left"]
+        and action == ACTIONS["move_left"]
         or state[0][2].item() > 1
-        and action == ACT["move_right"]
+        and action == ACTIONS["move_right"]
         or state[0][3].item() < -1
-        and action == ACT["move_down"]
+        and action == ACTIONS["move_down"]
         or state[0][3].item() > 1
-        and action == ACT["move_up"]
+        and action == ACTIONS["move_up"]
     ):
-        action = ACT["no_action"]
+        action = ACTIONS["no_action"]
     return action
 
 
@@ -173,7 +174,7 @@ def player():
     "--strategy",
     "-s",
     type=click.Choice(list(STRAT.keys())),
-    default="dummy",
+    default="static",
     help="Strategy",
 )
 @click.option(
@@ -192,7 +193,7 @@ def test(ctx, adversary_model, strategy, visualize):
     import torch
 
     from src.agent.constants import AGENTS, EPS_NUM, MAX_CYCLES, RAY_BATCHES, device
-    from src.agent.utils import DQN, select_action
+    from src.agent.utils import DQN, StateCache, select_action
 
     def env_creator(render_mode="rgb_array"):
         from src.world import world_utils
@@ -232,19 +233,28 @@ def test(ctx, adversary_model, strategy, visualize):
         episode_durations = []
         episode_rewards = []
 
+        state_cache = StateCache()
+
         for i_episode in range(EPS_NUM):
             env.reset()
             env.render()
             state, reward, _, _, _ = env.last()
 
+            for agent in AGENTS:
+                state_cache.save_state(agent, state, reward)
+
             rewards = []
             actions = {agent: torch.tensor([[0]], device=device) for agent in AGENTS}
-
-            for t in count():
-                agent = AGENTS[t % 4]
+            t = 0
+            for agent in env.agent_iter():
+                t += 1
+                # agent = AGENTS[t % 4]
+                previous_state = state_cache.get_state(agent)
                 observation, reward, terminated, truncated, _ = env.last()
-                observation = torch.from_numpy(observation)
                 rewards.append(reward)
+
+                observation, reward = state_cache.deal_state(agent, observation, reward)
+                old_action = actions[agent]
                 done = terminated or truncated
                 if done:
                     env.step(None)
@@ -254,8 +264,8 @@ def test(ctx, adversary_model, strategy, visualize):
                         policy_net,
                         good_agent=("agent" in agent),
                         steps_done=steps_done,
-                        player_strat=strategy,
                         random_action=env.action_space("agent_0").sample(),
+                        player_strat=strategy,
                     )
                     actions[agent] = action
                     env.step(action.item())
