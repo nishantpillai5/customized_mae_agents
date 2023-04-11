@@ -99,7 +99,7 @@ def train(ctx, visualize):
         logging.config.dictConfig(worker_config)
         logger = logging.getLogger("train")
 
-        filename = config["handlers"]["r_file"]["filename"]
+        filename = worker_config["handlers"]["r_file"]["filename"]
         # Get number of actions from gym action space
         n_actions = 5
         # Get the number of state observations

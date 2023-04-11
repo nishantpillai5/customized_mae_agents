@@ -11,6 +11,7 @@ setup(
         "console_scripts": [
             "world = src.world.world:world",
             "adversary = src.agent.adversary:adversary",
+            "player = src.agent.player:player",
             "pipeline = src.pipeline:pipeline",
         ],
     },

@@ -1,3 +1,15 @@
+import logging
+import logging.config
+from pathlib import Path
+
+import click
+from src.utils import get_files, get_logging_conf, get_project_root
+
+from pprint import pprint
+
+logging.config.dictConfig(get_logging_conf("player"))
+logger = logging.getLogger("test")
+
 def away_from_everything(state):
     """
     Player A: Away from everything
@@ -123,3 +135,21 @@ def get_player_action(state, strategy=None, override=None):
         return STRAT[strategy](state)
     else:
         return STRAT["dummy"](state)
+
+
+@click.group()
+def player():
+    """Player processes"""
+    pass
+
+
+@click.command()
+@click.argument("adversary_model")
+@click.option("--visualize","-v", is_flag=True, show_default=True, default=False, help="Visualize")
+@click.pass_context
+def test(ctx, adversary_model, visualize):
+    # adversary_model -> filename
+    # Load model and run player strat on that model
+    pass
+
+player.add_command(test)
