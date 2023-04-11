@@ -154,6 +154,9 @@ def train(ctx, visualize):
                 previous_state = state_cache.get_state(agent)
                 observation, reward, terminated, truncated, _ = env.last()
                 rewards.append(reward)
+
+                logger.warn(f"obs: {type(observation)}")
+
                 observation, reward = state_cache.deal_state(agent, observation, reward)
                 old_action = actions[agent]
                 done = terminated or truncated
@@ -166,7 +169,7 @@ def train(ctx, visualize):
                         good_agent=("agent" in agent),
                         steps_done=steps_done,
                         random_action=env.action_space("agent_0").sample(),
-                        player_action=0  # still player test
+                        player_strat="dummy",  # still player test
                     )
                     actions[agent] = action
                     env.step(action.item())

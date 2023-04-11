@@ -1,23 +1,14 @@
 import logging
 import logging.config
+import random
 from pathlib import Path
 from pprint import pprint
 
 import click
-import random
 
 from src.utils import get_files, get_logging_conf, get_project_root
 
-logging.config.dictConfig(get_logging_conf("player"))
-logger = logging.getLogger("test")
-
-act = {
-    "no_action": 0,
-    "move_left": 1,
-    "move_right": 2,
-    "move_down": 3,
-    "move_up": 4
-}
+ACT = {"no_action": 0, "move_left": 1, "move_right": 2, "move_down": 3, "move_up": 4}
 
 
 def away_from_everything(state):  # Evasive
@@ -129,7 +120,11 @@ def dummy(state):
     At every frame:
     - Follow vector`
     """
-    return None
+    return 0
+
+
+def random(state):
+    return random.choice([0, 1, 2, 3, 4])
 
 
 STRAT = {
@@ -139,27 +134,30 @@ STRAT = {
     "anti_gravity": anti_gravity,
     "dqn": dqn,
     "dummy": dummy,
+    "random": random,
 }
 
 
 def get_player_action(state, strategy=None, override=None):
-    # TODO: Player strategies
-    if override is not None:  # FIXME: Temporary override with random action
+    if override is not None:
         action = override
     if strategy is not None:
         action = STRAT[strategy](state)
     else:
         action = STRAT["dummy"](state)
 
-    if action is None:
-        action = random.choice([0, 1, 2, 3, 4])
-
     # boundary check
-    if (state[0][2].item() < -1 and action == act["move_left"] or
-       state[0][2].item() > 1 and action == act["move_right"] or
-       state[0][3].item() < -1 and action == act["move_down"] or
-       state[0][3].item() > 1 and action == act["move_up"]):
-        action = act["no_action"]
+    if (
+        state[0][2].item() < -1
+        and action == ACT["move_left"]
+        or state[0][2].item() > 1
+        and action == ACT["move_right"]
+        or state[0][3].item() < -1
+        and action == ACT["move_down"]
+        or state[0][3].item() > 1
+        and action == ACT["move_up"]
+    ):
+        action = ACT["no_action"]
     return action
 
 
@@ -209,11 +207,10 @@ def test(ctx, adversary_model, strategy, visualize):
         if not name:
             name = int(random.random() * 10000)
 
-        # worker_config = get_logging_conf(f"ad_train_{name}")
-        # logging.config.dictConfig(worker_config)
-        # logger = logging.getLogger("train")
+        worker_config = get_logging_conf(f"player_{name}")
+        logging.config.dictConfig(worker_config)
+        logger = logging.getLogger("console")
 
-        filename = worker_config["handlers"]["r_file"]["filename"]
         # FIXME: Get number of actions from gym action space
         n_actions = 5
 
@@ -231,6 +228,10 @@ def test(ctx, adversary_model, strategy, visualize):
         # target_net.load_state_dict(torch.load(PATH))
         policy_net.eval()
 
+        steps_done = 0
+        episode_durations = []
+        episode_rewards = []
+
         for i_episode in range(EPS_NUM):
             env.reset()
             env.render()
@@ -241,8 +242,8 @@ def test(ctx, adversary_model, strategy, visualize):
 
             for t in count():
                 agent = AGENTS[t % 4]
-                previous_state = state_cache.get_state(agent)
                 observation, reward, terminated, truncated, _ = env.last()
+                observation = torch.from_numpy(observation)
                 rewards.append(reward)
                 done = terminated or truncated
                 if done:
@@ -253,7 +254,7 @@ def test(ctx, adversary_model, strategy, visualize):
                         policy_net,
                         good_agent=("agent" in agent),
                         steps_done=steps_done,
-                        player_action=get_player_action(state, strategy=strategy),
+                        player_strat=strategy,
                         random_action=env.action_space("agent_0").sample(),
                     )
                     actions[agent] = action
@@ -275,7 +276,7 @@ def test(ctx, adversary_model, strategy, visualize):
     task_handles = []
     try:
         for i in range(1, RAY_BATCHES + 1):
-            task_handles.append(ray_train.remote(name=i))
+            task_handles.append(ray_test.remote(name=i))
 
         output = ray.get(task_handles)
         print(output)
