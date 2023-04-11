@@ -184,10 +184,12 @@ class Scenario(BaseScenario):
             shape
         ):  # reward can optionally be shaped (decreased reward for increased distance from agents)
             for adv in adversaries:
-                rew += 0.3 - 0.1 * min(
+                minimum_dist = min(
                     np.sqrt(np.sum(np.square(a.state.p_pos - adv.state.p_pos)))
                     for a in agents
                 )
+                if minimum_dist < 0.5:
+                    rew += 0.5 - 0.1 * minimum_dist
         if agent.collide:
             for ag in agents:
                 for adv in adversaries:

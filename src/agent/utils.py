@@ -130,8 +130,10 @@ def select_action(
     good_agent=False,
     steps_done=0,
     random_action=None,
-    player_action=get_player_action(state, strategy=None),
+    player_action=None
 ):
+    if player_action is None:
+        player_action = get_player_action(state, strategy=None, override=random_action)
     if good_agent:
         return (
             torch.tensor([[player_action]], device=device, dtype=torch.long),
