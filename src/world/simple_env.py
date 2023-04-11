@@ -281,6 +281,7 @@ class SimpleEnv(AECEnv):
             observation = np.array(pygame.surfarray.pixels3d(self.screen))
             return np.transpose(observation, axes=(1, 0, 2))
         elif self.render_mode == "human":
+            pygame.event.pump()
             pygame.display.flip()
             return
 
