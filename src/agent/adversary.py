@@ -71,6 +71,7 @@ def train(ctx, visualize):
         print_rewards,
         select_action,
     )
+
     from src.agent.constants import (
         AGENTS,
         EPS_NUM,
@@ -100,15 +101,15 @@ def train(ctx, visualize):
         logger = logging.getLogger("train")
 
         filename = worker_config["handlers"]["r_file"]["filename"]
-        # Get number of actions from gym action space
+        # FIXME: Get number of actions from gym action space
         n_actions = 5
-        # Get the number of state observations
 
         env = env_creator(render_mode="human" if visualize else "rgb_array")
         env.reset()
         env.render()
 
         state, _, _, _, _ = env.last()
+        # Get the number of state observations
         n_observations = len(state)
 
         policy_net = DQN(n_observations, n_actions).to(device)

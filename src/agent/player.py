@@ -10,7 +10,6 @@ from pprint import pprint
 logging.config.dictConfig(get_logging_conf("player"))
 logger = logging.getLogger("test")
 
-
 def away_from_everything(state):  # Evasive
     """
     Player A: Away from everything
@@ -37,7 +36,6 @@ def away_from_everything(state):  # Evasive
     - Enemies have to learn to surround the player and slowly move together towards it
     """
     return None
-
 
 def separate_from_enemies(state):  # Hiding
     """
@@ -67,14 +65,13 @@ def separate_from_enemies(state):  # Hiding
     """
     return None
 
-
 def using_obstacles(state):  # Shifty
     """
     Player C: using obstacles to get away
     This player chooses a desired position on the map based on the situation, and then pathfinds towards it
 
     A set of manually selected positions is given to the player to choose from based on the situation.
-    The positions are manually selected like so:
+    The positions are manually selected like so: 
         - Indentify the spaces between close obstacles
         - Put one position at the center of the spaces, and two other positions before and after, to create a tunnel
         - Put other positions at the sides of the map
@@ -97,12 +94,10 @@ def using_obstacles(state):  # Shifty
     """
     return None
 
-
 def anti_gravity(state):
     """
     """
     return None
-
 
 def dqn(state):
     """
@@ -110,7 +105,6 @@ def dqn(state):
     This is a replica of the originally intended test for this environment, applied to our settings.
     """
     return None
-
 
 def dummy(state):
     """
@@ -125,18 +119,17 @@ def dummy(state):
 
 
 STRAT = {
-    "away_from_everything": away_from_everything,
-    "separate_from_enemies": separate_from_enemies,
-    "using_obstacles": using_obstacles,
-    "anti_gravity": anti_gravity,
-    "dqn": dqn,
-    "dummy": dummy,
+    "away_from_everything" : away_from_everything,
+    "separate_from_enemies" : separate_from_enemies,
+    "using_obstacles" : using_obstacles,
+    "anti_gravity" : anti_gravity,
+    "dqn" : dqn,
+    "dummy" : dummy,
 }
-
 
 def get_player_action(state, strategy=None, override=None):
     # TODO: Player strategies
-    if override is not None:  # FIXME: Temporary override with random action
+    if override is not None: # FIXME: Temporary override with random action
         return override
     if strategy is not None:
         return STRAT[strategy](state)
@@ -152,12 +145,113 @@ def player():
 
 @click.command()
 @click.argument("adversary_model")
-@click.option("--visualize", "-v", is_flag=True, show_default=True, default=False, help="Visualize")
+@click.option("--strategy", "-s", type=click.Choice(list(STRAT.keys())), default="dummy", help="Strategy")
+@click.option("--visualize","-v", is_flag=True, show_default=True, default=False, help="Visualize")
 @click.pass_context
-def test(ctx, adversary_model, visualize):
-    # adversary_model -> filename
-    # Load model and run player strat on that model
-    pass
+def test(ctx, adversary_model, strategy, visualize):
+    import random
+    from itertools import count
+
+    import torch
+    from src.agent.constants import (
+        AGENTS,
+        EPS_NUM,
+        MAX_CYCLES,
+        RAY_BATCHES,
+        device,
+    )
+
+    from src.agent.utils import (
+        DQN,
+        select_action,
+    )
+
+    def env_creator(render_mode="rgb_array"):
+        from src.world import world_utils
+        env = world_utils.env(render_mode=render_mode, 
+                max_cycles=MAX_CYCLES)
+        return env
+
+    import ray
+
+    @ray.remote
+    def ray_test(name=None):
+        if not name:
+            name = int(random.random() * 10000)
+
+        # worker_config = get_logging_conf(f"ad_train_{name}")
+        # logging.config.dictConfig(worker_config)
+        # logger = logging.getLogger("train")
+
+        filename = worker_config["handlers"]["r_file"]["filename"]
+        # FIXME: Get number of actions from gym action space
+        n_actions = 5
+
+        env = env_creator(render_mode="human" if visualize else "rgb_array")
+        env.reset()
+        env.render()
+
+        state, _, _, _, _ = env.last()
+        # Get the number of state observations
+        n_observations = len(state)
+
+        policy_net = DQN(n_observations, n_actions).to(device)
+        # target_net = DQN(n_observations, n_actions).to(device)
+        policy_net.load_state_dict(torch.load(adversary_model))
+        # target_net.load_state_dict(torch.load(PATH))
+        policy_net.eval()
+
+        for i_episode in range(EPS_NUM):
+            env.reset()
+            env.render()
+            state, reward, _, _, _ = env.last()
+
+            rewards = []
+            actions = {agent: torch.tensor([[0]], device=device) for agent in AGENTS}
+
+            for t in count():
+                agent = AGENTS[t % 4]
+                previous_state = state_cache.get_state(agent)
+                observation, reward, terminated, truncated, _ = env.last()
+                rewards.append(reward)
+                done = terminated or truncated
+                if done:
+                    env.step(None)
+                else:
+                    action, steps_done = select_action(
+                        observation,
+                        policy_net,
+                        good_agent=("agent" in agent),
+                        steps_done=steps_done,
+                        player_action=get_player_action(state, strategy=strategy),
+                        random_action=env.action_space("agent_0").sample(),
+                    )
+                    actions[agent] = action
+                    env.step(action.item())
+
+                env.render()
+
+                if done:  # FIXME: is there a reason for two checks lol?
+                    episode_durations.append(t + 1)
+                    episode_rewards += rewards[-4:]
+                    logger.info(f"Ep reward: {episode_rewards[-4:]}")
+                    break
+
+        logger.info(f"Complete: {episode_rewards}")
+        # TODO: Aggregate and Log Rewards
+
+        return torch.tensor(episode_rewards, dtype=torch.float)
+
+    task_handles = []
+    try:
+        for i in range(1, RAY_BATCHES + 1):
+            task_handles.append(ray_train.remote(name=i))
+
+        output = ray.get(task_handles)
+        print(output)
+    except KeyboardInterrupt:
+        for i in task_handles:
+            ray.cancel(i)
 
 
 player.add_command(test)
