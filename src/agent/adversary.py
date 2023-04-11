@@ -3,6 +3,7 @@ import logging.config
 from pathlib import Path
 
 import click
+
 from src.utils import get_files, get_logging_conf, get_project_root
 
 
@@ -14,21 +15,25 @@ def adversary():
 
 @click.command()
 @click.argument("filepaths", nargs=-1)
-@click.option("--visualize","-v", is_flag=True, show_default=True, default=False, help="Visualize")
+@click.option(
+    "--visualize",
+    "-v",
+    is_flag=True,
+    show_default=True,
+    default=False,
+    help="Visualize",
+)
 @click.pass_context
 def eval(ctx, filepaths, visualize):
     import torch
-    from src.agent.utils import DQN
 
-    from src.agent.constants import (
-        MAX_CYCLES,
-        device
-    )
+    from src.agent.constants import MAX_CYCLES, device
+    from src.agent.utils import DQN
 
     def env_creator(render_mode="rgb_array"):
         from src.world import world_utils
-        env = world_utils.env(render_mode=render_mode, 
-                max_cycles=MAX_CYCLES)
+
+        env = world_utils.env(render_mode=render_mode, max_cycles=MAX_CYCLES)
         return env
 
     env = env_creator(render_mode="human" if visualize else "rgb_array")
@@ -40,22 +45,29 @@ def eval(ctx, filepaths, visualize):
 
     policy_net = DQN(n_observations, n_actions).to(device)
 
-    # https://pytorch.org/tutorials/beginner/saving_loading_models.html   
+    # https://pytorch.org/tutorials/beginner/saving_loading_models.html
 
-    for filepath in filepaths: # to test all models with one command
+    for filepath in filepaths:  # to test all models with one command
         policy_net.load_state_dict(torch.load(filepath))
 
         # you must call model.eval() (maybe not needed)
         # https://pytorch.org/tutorials/recipes/recipes/saving_and_loading_models_for_inference.html#save-and-load-the-model-via-state-dict
 
-        policy_net.eval() 
+        policy_net.eval()
         print("Eval: ", filepath)
 
         # TODO: compute rewards with saved models and log them, maybe use ray for multiple instances
 
 
 @click.command()
-@click.option("--visualize","-v", is_flag=True, show_default=True, default=False, help="Visualize")
+@click.option(
+    "--visualize",
+    "-v",
+    is_flag=True,
+    show_default=True,
+    default=False,
+    help="Visualize",
+)
 @click.pass_context
 def train(ctx, visualize):
     import random
@@ -63,6 +75,17 @@ def train(ctx, visualize):
 
     import torch
     import torch.optim as optim
+
+    from src.agent.constants import (
+        AGENTS,
+        EPS_NUM,
+        LR,
+        MAX_CYCLES,
+        RAY_BATCHES,
+        REPLAY_MEM,
+        TAU,
+        device,
+    )
     from src.agent.utils import (
         DQN,
         ReplayMemory,
@@ -72,21 +95,10 @@ def train(ctx, visualize):
         select_action,
     )
 
-    from src.agent.constants import (
-        AGENTS,
-        EPS_NUM,
-        MAX_CYCLES,
-        LR,
-        RAY_BATCHES,
-        REPLAY_MEM,
-        TAU,
-        device,
-    )
-
     def env_creator(render_mode="rgb_array"):
         from src.world import world_utils
-        env = world_utils.env(render_mode=render_mode, 
-                max_cycles=MAX_CYCLES)
+
+        env = world_utils.env(render_mode=render_mode, max_cycles=MAX_CYCLES)
         return env
 
     import ray
@@ -182,8 +194,8 @@ def train(ctx, visualize):
 
         logger.info(f"Complete: {episode_rewards}")
         # Save model
-        torch.save(policy_net.state_dict(), filename+"_policy.pth")
-        torch.save(target_net.state_dict(), filename+"_target.pth")
+        torch.save(policy_net.state_dict(), filename + "_policy.pth")
+        torch.save(target_net.state_dict(), filename + "_target.pth")
 
         return torch.tensor(episode_rewards, dtype=torch.float)
 
@@ -201,4 +213,3 @@ def train(ctx, visualize):
 
 adversary.add_command(train)
 adversary.add_command(eval)
-

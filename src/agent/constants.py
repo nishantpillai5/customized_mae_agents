@@ -7,7 +7,7 @@ EPS_END = 0.05
 EPS_DECAY = 1000
 TAU = 0.005
 LR = 1e-4
-REPLAY_MEM = 256 # 00)  # rob: reduced to reduce RAM usage
+REPLAY_MEM = 256  # 00)  # rob: reduced to reduce RAM usage
 
 EPS_NUM = 50
 
@@ -18,4 +18,5 @@ RAY_BATCHES = 3
 MAX_CYCLES = 200
 
 import torch
+
 device = torch.device(DEVICE)

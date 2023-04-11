@@ -1,7 +1,8 @@
-import time
 import random
+import time
 
 import click
+
 from src.utils import get_project_root
 
 
@@ -25,13 +26,13 @@ def run(ctx):
     """
 
     from src.world import world_utils
-    
+
     cycles = 200
     env = world_utils.env(render_mode="human", max_cycles=cycles)
 
     env.reset()
     current_cycle = 0
-    agent_count = 4  #TODO: get from env
+    agent_count = 4  # TODO: get from env
     action_queue = []
 
     for agent in env.agent_iter():
@@ -47,7 +48,7 @@ def run(ctx):
                 adversary_0_action,
                 adversary_1_action,
                 adversary_2_action,
-                good_agent_action
+                good_agent_action,
             ]
         # print(agent)
         env.render()

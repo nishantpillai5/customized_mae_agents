@@ -1,14 +1,13 @@
-import numpy as np
-from gymnasium.utils import EzPickle
 import json
 
+import numpy as np
+from gymnasium.utils import EzPickle
 from pettingzoo.utils.conversions import parallel_wrapper_fn
 
+from src.utils import get_project_root
 from src.world.core import Agent, Landmark, World
 from src.world.scenario import BaseScenario
 from src.world.simple_env import SimpleEnv, make_env
-
-from src.utils import get_project_root
 
 
 class raw_env(SimpleEnv, EzPickle):
@@ -40,16 +39,19 @@ class raw_env(SimpleEnv, EzPickle):
         self.metadata["name"] = "simple_tag_v2"
 
 
-
 env = make_env(raw_env)
 parallel_env = parallel_wrapper_fn(env)
 
 
 class Scenario(BaseScenario):
-    def make_world(self, num_good=1, num_adversaries=3): # num obstancles read from json
+    def make_world(
+        self, num_good=1, num_adversaries=3
+    ):  # num obstancles read from json
         with open(get_project_root(plus="src/world/init_state.json")) as f:
             self.init_state = json.load(f)
-            self.init_state["landmarks"]["transformed_pos"] = (np.asarray(self.init_state["landmarks"]["pos"])*2)-1
+            self.init_state["landmarks"]["transformed_pos"] = (
+                np.asarray(self.init_state["landmarks"]["pos"]) * 2
+            ) - 1
 
         num_obstacles = len(self.init_state["landmarks"]["pos"])
 
@@ -102,7 +104,9 @@ class Scenario(BaseScenario):
             agent.state.c = np.zeros(world.dim_c)
         for i, landmark in enumerate(world.landmarks):
             if not landmark.boundary:
-                landmark.state.p_pos = self.init_state["landmarks"]["transformed_pos"][i]
+                landmark.state.p_pos = self.init_state["landmarks"]["transformed_pos"][
+                    i
+                ]
                 landmark.state.p_vel = np.zeros(world.dim_p)
 
     def benchmark_data(self, agent, world):
@@ -218,7 +222,7 @@ class Scenario(BaseScenario):
                 continue
             comm.append(other.state.c)
             other_pos.append(other.state.p_pos - agent.state.p_pos)
-            if not other.adversary or True: # Make observations same for both
+            if not other.adversary or True:  # Make observations same for both
                 other_vel.append(other.state.p_vel)
         return np.concatenate(
             [agent.state.p_vel]

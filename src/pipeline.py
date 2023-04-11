@@ -9,6 +9,7 @@ from src.utils import get_files, get_logging_conf, get_project_root
 logging.config.dictConfig(get_logging_conf())
 logger = logging.getLogger("pipeline")
 
+
 @click.group()
 def pipeline():
     """Process raw data into processed data"""
@@ -41,12 +42,10 @@ def run(ctx, filepaths):
 
         # Features
         data_output_files = get_files(raw_dir + f"/{filename}/*.npy")
-        ctx.invoke(features_run, filepaths=data_output_files,
-                   output_dir=interim_dir)
+        ctx.invoke(features_run, filepaths=data_output_files, output_dir=interim_dir)
 
         # Predict
-        features_output_files = get_files(
-            interim_dir + f"/{filename}/*_result.npy")
+        features_output_files = get_files(interim_dir + f"/{filename}/*_result.npy")
 
         ctx.invoke(
             models_run,
