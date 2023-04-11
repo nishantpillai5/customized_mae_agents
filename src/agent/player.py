@@ -114,7 +114,7 @@ def dummy_player(state):
     At every frame:
     - Follow vector
     """
-    return 0
+    return None
 
 
 def static_player(state):

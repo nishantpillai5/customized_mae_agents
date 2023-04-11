@@ -33,11 +33,12 @@ The `Makefile` and `setup.py` contains the central entry points for common tasks
 - Makefile commands: Run `make help` to list all available commands.
 - CLI commands: Run each command to get a list of its sub-commands.
 
-| Command         | Description             |
-| --------------- | ----------------------- |
-| `pipeline`      | Run entire pipeline.    |
-| `world`         | Visualize world.        |
-| `adversary`     | Adversary tests.        |
+| Command      | Description         |
+| ------------ | ------------------- |
+| `pipeline`   | Run entire pipeline |
+| `world`      | Visualize world     |
+| `adversary`  | Adversary tests     |
+| `player`     | Player tests        |
 
 - `adversary train` to run the training script
 -  logging is done for each ray worker
@@ -46,7 +47,7 @@ The `Makefile` and `setup.py` contains the central entry points for common tasks
 
 ```
 adversary train -v
-player test ./models/XXX.pth -s random -v
+player test ./models/example.pth -s random -v
 ```
 
 # Windows Guide
