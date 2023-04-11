@@ -56,3 +56,4 @@ pip install --no-deps -r requirements_freezed_linux_0304.txt
 - [on it] Saving and loading models from file
 - [ ] Player styles
 - [ ] Evaluation
+- [ ] Fix order of rewards

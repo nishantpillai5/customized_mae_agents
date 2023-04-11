@@ -147,13 +147,14 @@ def train(ctx, visualize):
 
             rewards = []
             actions = {agent: torch.tensor([[0]], device=device) for agent in AGENTS}
-
-            for t in count():
-                agent = AGENTS[t % 4]
+            t = 0
+            for agent in env.agent_iter():
+                t += 1
+                # agent = AGENTS[t % 4]
                 previous_state = state_cache.get_state(agent)
                 observation, reward, terminated, truncated, _ = env.last()
+                rewards.append((agent, reward))
                 observation, reward = state_cache.deal_state(agent, observation, reward)
-                rewards.append(reward)
                 old_action = actions[agent]
                 done = terminated or truncated
                 if done:
@@ -165,6 +166,7 @@ def train(ctx, visualize):
                         good_agent=("agent" in agent),
                         steps_done=steps_done,
                         random_action=env.action_space("agent_0").sample(),
+                        player_action=0  # still player test
                     )
                     actions[agent] = action
                     env.step(action.item())
@@ -189,7 +191,10 @@ def train(ctx, visualize):
                 if done:  # FIXME: is there a reason for two checks lol?
                     episode_durations.append(t + 1)
                     episode_rewards += rewards[-4:]
-                    logger.info(f"Ep reward: {episode_rewards[-4:]}")
+                    try:
+                        logger.info(f"Ep reward: {episode_rewards[-4:]}")
+                    except Exception:
+                        print("logfile permission error__", endl="")
                     break
 
         logger.info(f"Complete: {episode_rewards}")

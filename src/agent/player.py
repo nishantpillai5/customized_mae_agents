@@ -4,11 +4,20 @@ from pathlib import Path
 from pprint import pprint
 
 import click
+import random
 
 from src.utils import get_files, get_logging_conf, get_project_root
 
 logging.config.dictConfig(get_logging_conf("player"))
 logger = logging.getLogger("test")
+
+act = {
+    "no_action": 0,
+    "move_left": 1,
+    "move_right": 2,
+    "move_down": 3,
+    "move_up": 4
+}
 
 
 def away_from_everything(state):  # Evasive
@@ -136,11 +145,22 @@ STRAT = {
 def get_player_action(state, strategy=None, override=None):
     # TODO: Player strategies
     if override is not None:  # FIXME: Temporary override with random action
-        return override
+        action = override
     if strategy is not None:
-        return STRAT[strategy](state)
+        action = STRAT[strategy](state)
     else:
-        return STRAT["dummy"](state)
+        action = STRAT["dummy"](state)
+
+    if action is None:
+        action = random.choice([0, 1, 2, 3, 4])
+
+    # boundary check
+    if (state[0][2].item() < -1 and action == act["move_left"] or
+       state[0][2].item() > 1 and action == act["move_right"] or
+       state[0][3].item() < -1 and action == act["move_down"] or
+       state[0][3].item() > 1 and action == act["move_up"]):
+        action = act["no_action"]
+    return action
 
 
 @click.group()
