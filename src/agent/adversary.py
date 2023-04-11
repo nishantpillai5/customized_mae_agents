@@ -1,6 +1,7 @@
 import logging
 import logging.config
 from pathlib import Path
+from pprint import pformat
 
 import click
 
@@ -198,7 +199,7 @@ def train(ctx, visualize):
                         print("logfile permission error__", endl="")
                     break
 
-        logger.info(f"Complete: {episode_rewards}")
+        logger.info("Complete Ep reward: \n" + pformat(episode_rewards))
         # Save model
         torch.save(policy_net.state_dict(), filename + "_policy.pth")
         torch.save(target_net.state_dict(), filename + "_target.pth")

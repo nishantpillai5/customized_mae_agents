@@ -252,9 +252,6 @@ def test(ctx, adversary_model, strategy, visualize):
                 previous_state = state_cache.get_state(agent)
                 observation, reward, terminated, truncated, _ = env.last()
 
-                # logger.info("Observation:")
-                # logger.info("\n"+pformat(observation))
-
                 rewards.append(reward)
 
                 observation, reward = state_cache.deal_state(agent, observation, reward)
@@ -282,8 +279,8 @@ def test(ctx, adversary_model, strategy, visualize):
                     logger.info(f"Ep reward: {episode_rewards[-4:]}")
                     break
 
-        logger.info(f"Complete: {episode_rewards}")
         # TODO: Aggregate and Log Rewards
+        logger.info("Complete Ep reward: \n" + pformat(episode_rewards))
 
         return torch.tensor(episode_rewards, dtype=torch.float)
 
