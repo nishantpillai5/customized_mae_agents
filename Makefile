@@ -1,4 +1,4 @@
-.PHONY: clean clean_data clean_interim clean_processed lint documentation clean_documentation create_environment delete_environment requirements data test_environment sync_data_to_s3 sync_data_from_s3
+.PHONY: clean clean_logs clean_data clean_interim clean_processed lint documentation clean_documentation create_environment delete_environment requirements data test_environment sync_data_to_s3 sync_data_from_s3
 
 #################################################################################
 # GLOBALS                                                                       #
@@ -30,6 +30,10 @@ endif
 clean:
 	find . -type f -name "*.py[co]" -delete
 	find . -type d -name "__pycache__" -delete
+
+## Delete all log files and saved log models
+clean_logs:
+	find ./logs/ -type f ! \( -name "*.yaml" -o -name "*.git*" \) -delete
 
 ## Clean all generated data except rosbags
 clean_data:

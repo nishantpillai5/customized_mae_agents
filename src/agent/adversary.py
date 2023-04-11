@@ -110,7 +110,7 @@ def train(ctx, visualize):
 
         worker_config = get_logging_conf(f"ad_train_{name}")
         logging.config.dictConfig(worker_config)
-        logger = logging.getLogger("train")
+        logger = logging.getLogger("both")
 
         filename = worker_config["handlers"]["r_file"]["filename"]
         # FIXME: Get number of actions from gym action space

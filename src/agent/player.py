@@ -2,7 +2,7 @@ import logging
 import logging.config
 import random
 from pathlib import Path
-from pprint import pprint
+from pprint import pformat
 
 import click
 
@@ -210,7 +210,7 @@ def test(ctx, adversary_model, strategy, visualize):
 
         worker_config = get_logging_conf(f"player_{name}")
         logging.config.dictConfig(worker_config)
-        logger = logging.getLogger("console")
+        logger = logging.getLogger("both")
 
         # FIXME: Get number of actions from gym action space
         n_actions = 5
@@ -251,6 +251,10 @@ def test(ctx, adversary_model, strategy, visualize):
                 # agent = AGENTS[t % 4]
                 previous_state = state_cache.get_state(agent)
                 observation, reward, terminated, truncated, _ = env.last()
+
+                # logger.info("Observation:")
+                # logger.info("\n"+pformat(observation))
+
                 rewards.append(reward)
 
                 observation, reward = state_cache.deal_state(agent, observation, reward)

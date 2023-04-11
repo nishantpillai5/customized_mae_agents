@@ -6,8 +6,8 @@ import click
 
 from src.utils import get_files, get_logging_conf, get_project_root
 
-logging.config.dictConfig(get_logging_conf())
-logger = logging.getLogger("pipeline")
+logging.config.dictConfig(get_logging_conf("pipeline"))
+logger = logging.getLogger("both")
 
 
 @click.group()
