@@ -153,7 +153,7 @@ def train(ctx, visualize):
                 # agent = AGENTS[t % 4]
                 previous_state = state_cache.get_state(agent)
                 observation, reward, terminated, truncated, _ = env.last()
-                rewards.append((agent, reward))
+                rewards.append(reward)
                 observation, reward = state_cache.deal_state(agent, observation, reward)
                 old_action = actions[agent]
                 done = terminated or truncated

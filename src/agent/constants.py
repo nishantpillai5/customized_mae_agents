@@ -15,7 +15,7 @@ AGENTS = ["adversary_0", "adversary_1", "adversary_2", "agent_0"]
 
 RAY_BATCHES = 3
 
-MAX_CYCLES = 1000
+MAX_CYCLES = 400
 
 import torch
 

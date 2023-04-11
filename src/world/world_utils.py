@@ -183,14 +183,18 @@ class Scenario(BaseScenario):
         if (
             shape
         ):  # reward can optionally be shaped (decreased reward for increased distance from agents)
-            for adv in adversaries:
-                minimum_dist = min(
-                    np.sqrt(np.sum(np.square(a.state.p_pos - adv.state.p_pos)))
-                    for a in agents
-                )
-                if minimum_dist < 0.5:
-                    rew += 0.5 - 0.1 * minimum_dist
-        if agent.collide:
+            minimum_dist = min(
+                np.sqrt(np.sum(np.square(a.state.p_pos - agent.state.p_pos)))
+                for a in agents
+                # for adv in adversaries
+            )
+            # if minimum_dist < 0.5:
+            # rew += minimum_dist
+            rew += sum(
+                np.sqrt(np.sum(np.square(ot.state.p_pos - agent.state.p_pos)))
+                for ot in adversaries
+            )
+        if agent.collide and False:
             for ag in agents:
                 for adv in adversaries:
                     if self.is_collision(ag, adv):
@@ -206,7 +210,7 @@ class Scenario(BaseScenario):
 
         for p in range(world.dim_p):
             x = abs(agent.state.p_pos[p])
-            rew -= bound(x)
+            # rew -= bound(x)
         return rew
 
     def observation(self, agent, world):
