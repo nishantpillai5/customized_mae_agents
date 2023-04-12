@@ -87,8 +87,7 @@ requirements:
 	$(CONDA_ACTIVATE) ./$(ENV_DIR)
 	@echo ">>> Installing pip dependencies."
 	# pip install -r requirements.txt
-	# pip install --no-deps -r requirements_freezed.txt
-	pip install --no-deps -r requirements_freezed_linux_0404.txt
+	pip install --no-deps -r requirements_freezed.txt
 	# $(PYTHON_INTERPRETER) -m pip install -U pip setuptools wheel
 	# $(PYTHON_INTERPRETER) -m pip install -r requirements.txt
 

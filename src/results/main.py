@@ -46,7 +46,7 @@ def record(ctx, adversary_model, strategy):
         env = world_utils.env(render_mode=render_mode, max_cycles=MAX_CYCLES)
         return env
 
-    worker_config = get_logging_conf(f"player_{name}")
+    worker_config = get_logging_conf(f"record")
     logging.config.dictConfig(worker_config)
     logger = logging.getLogger("test")
 
