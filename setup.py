@@ -13,6 +13,7 @@ setup(
             "adversary = src.agent.adversary:adversary",
             "player = src.agent.player:player",
             "pipeline = src.pipeline:pipeline",
+            "results = src.results.main:results",
         ],
     },
 )

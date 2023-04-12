@@ -22,7 +22,6 @@ var/
 *.egg-info/
 .installed.cfg
 *.egg
-logs/*.pth
 
 # PyInstaller
 #  Usually these files are written by a python script from a template
@@ -91,3 +90,7 @@ target/
 
 # Wandb
 wandb/
+
+# Logs
+logs/*.pth
+logs/videos/*

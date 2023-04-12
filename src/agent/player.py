@@ -1,14 +1,8 @@
-import logging
-import logging.config
 import random
-from pathlib import Path
-from pprint import pformat
-import numpy as np
 
 import click
 
 from src.agent.constants import ACTIONS
-from src.utils import get_files, get_logging_conf, get_project_root
 
 
 def evasive_player(state):
@@ -188,13 +182,17 @@ def player():
 )
 @click.pass_context
 def test(ctx, adversary_model, strategy, visualize):
+    import logging
+    import logging.config
     import random
-    from itertools import count
+    from pprint import pformat
 
+    import numpy as np
     import torch
 
     from src.agent.constants import AGENTS, EPS_NUM, MAX_CYCLES, RAY_BATCHES, device
     from src.agent.utils import DQN, StateCache, select_action
+    from src.utils import get_logging_conf
 
     def env_creator(render_mode="rgb_array"):
         from src.world import world_utils
