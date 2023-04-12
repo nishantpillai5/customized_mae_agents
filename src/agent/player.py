@@ -3,6 +3,7 @@ import logging.config
 import random
 from pathlib import Path
 from pprint import pformat
+import numpy as np
 
 import click
 
@@ -280,7 +281,7 @@ def test(ctx, adversary_model, strategy, visualize):
                     break
 
         # TODO: Aggregate and Log Rewards
-        logger.info("Complete Ep reward: \n" + pformat(episode_rewards))
+        logger.info("Complete Ep reward: \n" + pformat(np.asarray(episode_rewards)))
 
         return torch.tensor(episode_rewards, dtype=torch.float)
 

@@ -4,6 +4,7 @@ from pathlib import Path
 from pprint import pformat
 
 import click
+import numpy as np
 
 from src.utils import get_files, get_logging_conf, get_project_root
 
@@ -57,7 +58,7 @@ def eval(ctx, filepaths, visualize):
         policy_net.eval()
         print("Eval: ", filepath)
 
-        # TODO: compute rewards with saved models and log them, maybe use ray for multiple instances
+        # TODO: compute rewards with saved models and log them, make a csv, maybe use ray for multiple instances
 
 
 @click.command()
@@ -199,7 +200,7 @@ def train(ctx, visualize):
                         print("logfile permission error__", endl="")
                     break
 
-        logger.info("Complete Ep reward: \n" + pformat(episode_rewards))
+        logger.info("Complete Ep reward: \n" + pformat(np.asarray(episode_rewards)))
         # Save model
         torch.save(policy_net.state_dict(), filename + "_policy.pth")
         torch.save(target_net.state_dict(), filename + "_target.pth")
