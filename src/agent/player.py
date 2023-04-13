@@ -1,4 +1,5 @@
 import random
+import numpy as np
 
 import click
 
@@ -68,9 +69,19 @@ def evasive_player(state):
         elif y_diffs < 0:
             action = ACTIONS["move_up"]
 
-
-
     return action
+
+
+def cart_to_polar(x, y):
+    rho = np.sqrt(x**2 + y**2)
+    phi = np.arctan2(y, x)
+    return(rho, phi)
+
+
+def polar_to_cart(rho, phi):
+    x = rho * np.cos(phi)
+    y = rho * np.sin(phi)
+    return(x, y)
 
 
 def hiding_player(state):
@@ -81,7 +92,7 @@ def hiding_player(state):
     Getting the vector:
     - Get enemies and obstacles positions
     - Get the average obstacle position (AOP) (this could be a manually set position)
-    - Convert enemies and self positions as radial positions to the AOP
+    - Convert enemies and self positions as radial positions to the AOP (polar coordinates)
     - For each enemy
         - Get opposite tangential direction (clockwise or counterclockwise)
         - Get opposite radial direction (away or towards AOP)
@@ -99,7 +110,74 @@ def hiding_player(state):
     How to beat this player:
     - Enemies have to learn to put themselves at various distances to the AOP, so to impede player movement, and then get closer.
     """
-    return None
+    # We're gonna use (0, 0) as the focal point, since it's close to the actual AOP
+
+    self_pos = cart_to_polar(state[0][2].item(), state[0][3].item())
+    enemies_pos = [
+        cart_to_polar(  # Note we need the absolute cartesian position here
+            state[0][i].item() + state[0][2].item(),
+            state[0][i + 1].item() + state[0][3].item()
+        ) for i in range(22, 28, 2)]
+
+    # Get directions away from each enemy
+    radial_dirs = [
+        (self_pos[0] - enemy_pos[0])
+        for enemy_pos in enemies_pos
+    ]
+    tangential_dirs = []
+    for enemy_pos in enemies_pos:
+        rel_pos = enemy_pos[1] - self_pos[1]
+        if rel_pos < 0:
+            rel_pos += 2 * np.pi
+        tangential_dirs.append(
+            rel_pos - np.pi
+        )
+
+    # Getting the importance between radial escape and tangential escape
+    # The idea is that p should escape radially when enemies close radially,
+    # and should escape tangentially when enemies close tangentially
+    radial_importances = 1 / (np.array(radial_dirs) / 2.83)
+    tangential_importances = 1 / (np.array(tangential_dirs) / np.pi)
+
+    # Enemy importance based on distance
+    enemy_importances = []
+    for i in range(3):
+        enemy_importances.append(1 / np.sqrt(
+            state[0][i + 22].item()**2 +
+            state[0][i + 23].item()**2
+        ))
+    radial_importances *= enemy_importances
+    tangential_importances *= enemy_importances
+
+    final_dir = (np.sum(radial_importances), np.sum(tangential_importances))
+    final_dir /= np.linalg.norm(final_dir)
+    final_dir /= np.max(np.abs(final_dir))
+
+    # Now we define a target position for the player
+    target_polar = (
+        self_pos[0] + final_dir[0] * 2.83 * 0.3,
+        self_pos[1] + final_dir[1] * np.pi * 0.3
+    )
+    target_cart = polar_to_cart(target_polar[0], target_polar[1])
+
+    # And cartesian distance for the player to target
+    dist_x = target_cart[0] - state[0][2].item()
+    dist_y = target_cart[1] - state[0][3].item()
+
+    # Now we move towards that target
+    action = ACTIONS["no_action"]
+    if abs(dist_x) > abs(dist_y):
+        if dist_x > 0:
+            action = ACTIONS["move_right"]
+        elif dist_x < 0:
+            action = ACTIONS["move_left"]
+    elif abs(dist_x) < abs(dist_y):
+        if dist_y > 0:
+            action = ACTIONS["move_up"]
+        elif dist_y < 0:
+            action = ACTIONS["move_down"]
+
+    return action
 
 
 def shifty_player(state):
