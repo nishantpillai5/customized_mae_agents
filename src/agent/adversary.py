@@ -169,7 +169,7 @@ def train(ctx, visualize):
                         good_agent=("agent" in agent),
                         steps_done=steps_done,
                         random_action=env.action_space("agent_0").sample(),
-                        player_strat="static",  # still player test
+                        player_strat="evasive",
                     )
                     actions[agent] = action
                     env.step(action.item())

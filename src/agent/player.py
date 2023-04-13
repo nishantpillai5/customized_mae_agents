@@ -5,10 +5,20 @@ import click
 from src.agent.constants import ACTIONS
 
 
+'''
+state vector elements:
+ 0, 1: self.velocity
+ 2, 3: self.position
+ 4-21: landmarks relative positions 
+22-27: adversaries relative positions
+28-33: adversaries velocities
+'''
+
+
 def evasive_player(state):
     """
     Player A: Away from everything
-    This player's intention is to get away from the enemies or from everythin as quick as possible.
+    This player's intention is to get away from the enemies or from everything as quick as possible.
 
     Getting the vector:
     - Get enemies and obstacles positions
@@ -30,7 +40,37 @@ def evasive_player(state):
     How to beat this player:
     - Enemies have to learn to surround the player and slowly move together towards it
     """
-    return None
+
+    # Getting sum of relative positions
+    x_diffs = 0
+    y_diffs = 0
+    # for landmarks
+    for i in range(4, 22, 2):
+        x_diffs += state[0][i].item() * 0.2
+    for i in range(5, 23, 2):
+        y_diffs += state[0][i].item() * 0.2
+    # for adversaries    
+    for i in range(22, 28, 2):
+        x_diffs += state[0][i].item()
+    for i in range(23, 29, 2):
+        y_diffs += state[0][i].item()
+    
+    # Checking larger difference and moving in opposite direction
+    action = ACTIONS["no_action"]
+    if abs(x_diffs) > abs(y_diffs):
+        if x_diffs > 0:
+            action = ACTIONS["move_left"]
+        elif x_diffs < 0:
+            action = ACTIONS["move_right"]
+    elif abs(x_diffs) < abs(y_diffs):
+        if y_diffs > 0:
+            action = ACTIONS["move_down"]
+        elif y_diffs < 0:
+            action = ACTIONS["move_up"]
+
+
+
+    return action
 
 
 def hiding_player(state):
