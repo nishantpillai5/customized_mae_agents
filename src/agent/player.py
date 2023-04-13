@@ -9,7 +9,7 @@ from src.agent.constants import ACTIONS
 state vector elements:
  0, 1: self.velocity
  2, 3: self.position
- 4-21: landmarks relative positions 
+ 4-21: landmarks relative positions
 22-27: adversaries relative positions
 28-33: adversaries velocities
 '''
@@ -46,15 +46,15 @@ def evasive_player(state):
     y_diffs = 0
     # for landmarks
     for i in range(4, 22, 2):
-        x_diffs += state[0][i].item() * 0.2
+        x_diffs += 0.1 / state[0][i].item()
     for i in range(5, 23, 2):
-        y_diffs += state[0][i].item() * 0.2
-    # for adversaries    
+        y_diffs += 0.1 / state[0][i].item()
+    # for adversaries
     for i in range(22, 28, 2):
-        x_diffs += state[0][i].item()
+        x_diffs += 1 / state[0][i].item()
     for i in range(23, 29, 2):
-        y_diffs += state[0][i].item()
-    
+        y_diffs += 1 / state[0][i].item()
+
     # Checking larger difference and moving in opposite direction
     action = ACTIONS["no_action"]
     if abs(x_diffs) > abs(y_diffs):
