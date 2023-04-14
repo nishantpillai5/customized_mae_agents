@@ -1,4 +1,23 @@
 # Evasive player
+## 14/04 ~13:40, rob PC
+
+Network: obs, 64, 32, 20, act
+RAY_BATCHES = 3
+EPS_NUM = 10
+MAX_CYCLES = 2500
+
+This time reward is shared, and at the end of an episode the average reward is shown.
+This average is basically the average distance with a bonus for every collision.
+
+So, in this test the enemies seemed to be more spreadout, but still basically all in the same place.
+The average reward was initially -0.85 to -0.55, and then stabilized around -0.3.
+After a while I feel the average grew to -0.25.
+The last episodes of the 3 instances scored: -0.26, -0.20 and -0.23
+
+There is definitely an increase over time
+
+
+# Evasive player
 ## 14/04 ~13:20, rob PC
 
 Network: obs, 64, 32, 20, act
