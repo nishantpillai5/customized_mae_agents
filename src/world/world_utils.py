@@ -172,7 +172,7 @@ class Scenario(BaseScenario):
             x = abs(agent.state.p_pos[p])
             rew -= bound(x)
 
-        return -100  # rew
+        return 0  # no reward for player
 
     def adversary_reward(self, agent, world):
         # Adversaries are rewarded for collisions with agents
@@ -184,9 +184,9 @@ class Scenario(BaseScenario):
             shape
         ):  # reward can optionally be shaped (decreased reward for increased distance from agents)
             minimum_dist = min(
-                np.sqrt(np.sum(np.square(a.state.p_pos - agent.state.p_pos)))
+                np.sqrt(np.sum(np.square(a.state.p_pos - adv.state.p_pos)))
                 for a in agents
-                # for adv in adversaries
+                for adv in adversaries
             )
             # if minimum_dist < 0.5:
             rew -= minimum_dist
@@ -204,8 +204,8 @@ class Scenario(BaseScenario):
                 return (x - 0.9) * 10
             return min(np.exp(2 * x - 2), 10)
 
-        for p in range(world.dim_p):
-            x = abs(agent.state.p_pos[p])
+        # for p in range(world.dim_p):
+        #    x = abs(agent.state.p_pos[p])
             # rew -= bound(x)
         return rew
 
