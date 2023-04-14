@@ -51,15 +51,16 @@ class DQN(nn.Module):
         super(DQN, self).__init__()
         self.layer1 = nn.Linear(n_observations, 64)
         self.layer2 = nn.Linear(64, 32)
-        self.layer2 = nn.Linear(32, 20)
-        self.layer3 = nn.Linear(20, n_actions)
+        self.layer3 = nn.Linear(32, 20)
+        self.layer4 = nn.Linear(20, n_actions)
 
     # Called with either one element to determine next action, or a batch
     # during optimization. Returns tensor([[left0exp,right0exp]...]).
     def forward(self, x):
         x = F.relu(self.layer1(x))
         x = F.relu(self.layer2(x))
-        return self.layer3(x)
+        x = F.relu(self.layer3(x))
+        return self.layer4(x)
 
 
 def optimize_model(optimizer, memory, policy_net, target_net):

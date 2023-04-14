@@ -9,7 +9,6 @@ TAU = 0.005
 LR = 1e-4
 REPLAY_MEM = 256  # 00)  # rob: reduced to reduce RAM usage
 
-EPS_NUM = 10
 
 AGENTS = ["adversary_0", "adversary_1", "adversary_2", "agent_0"]
 
@@ -22,7 +21,7 @@ ACTIONS = {
 }
 
 RAY_BATCHES = 3
-
+EPS_NUM = 10
 MAX_CYCLES = 400
 
 import torch
