@@ -1,19 +1,18 @@
 import random
-import numpy as np
 
 import click
+import numpy as np
 
 from src.agent.constants import ACTIONS
 
-
-'''
+"""
 state vector elements:
  0, 1: self.velocity
  2, 3: self.position
  4-21: landmarks relative positions
 22-27: adversaries relative positions
 28-33: adversaries velocities
-'''
+"""
 
 
 def evasive_player(state):
@@ -75,13 +74,13 @@ def evasive_player(state):
 def cart_to_polar(x, y):
     rho = np.sqrt(x**2 + y**2)
     phi = np.arctan2(y, x)
-    return(rho, phi)
+    return (rho, phi)
 
 
 def polar_to_cart(rho, phi):
     x = rho * np.cos(phi)
     y = rho * np.sin(phi)
-    return(x, y)
+    return (x, y)
 
 
 def hiding_player(state):
@@ -116,22 +115,19 @@ def hiding_player(state):
     enemies_pos = [
         cart_to_polar(  # Note we need the absolute cartesian position here
             state[0][i].item() + state[0][2].item(),
-            state[0][i + 1].item() + state[0][3].item()
-        ) for i in range(22, 28, 2)]
+            state[0][i + 1].item() + state[0][3].item(),
+        )
+        for i in range(22, 28, 2)
+    ]
 
     # Get directions away from each enemy
-    radial_dirs = [
-        (self_pos[0] - enemy_pos[0])
-        for enemy_pos in enemies_pos
-    ]
+    radial_dirs = [(self_pos[0] - enemy_pos[0]) for enemy_pos in enemies_pos]
     tangential_dirs = []
     for enemy_pos in enemies_pos:
         rel_pos = enemy_pos[1] - self_pos[1]
         if rel_pos < 0:
             rel_pos += 2 * np.pi
-        tangential_dirs.append(
-            rel_pos - np.pi
-        )
+        tangential_dirs.append(rel_pos - np.pi)
 
     # Getting the importance between radial escape and tangential escape
     # The idea is that p should escape radially when enemies close radially,
@@ -142,10 +138,9 @@ def hiding_player(state):
     # Enemy importance based on distance
     enemy_importances = []
     for i in range(3):
-        enemy_importances.append(1 / np.sqrt(
-            state[0][i + 22].item()**2 +
-            state[0][i + 23].item()**2
-        ))
+        enemy_importances.append(
+            1 / np.sqrt(state[0][i + 22].item() ** 2 + state[0][i + 23].item() ** 2)
+        )
     radial_importances *= enemy_importances
     tangential_importances *= enemy_importances
 
@@ -156,7 +151,7 @@ def hiding_player(state):
     # Now we define a target position for the player
     target_polar = (
         self_pos[0] + final_dir[0] * 2.83 * 0.3,
-        self_pos[1] + final_dir[1] * np.pi * 0.3
+        self_pos[1] + final_dir[1] * np.pi * 0.3,
     )
     target_cart = polar_to_cart(target_polar[0], target_polar[1])
 
