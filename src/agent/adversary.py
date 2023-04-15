@@ -196,7 +196,8 @@ def train(ctx, visualize):
                     episode_rewards += rewards[-4:]
                     try:
                         logger.info(f"Ep reward: {episode_rewards[-4:]}")
-                        logger.info(f"This ep avg reward: {np.sum(rewards) / ((t+1)*3)}")
+                        logger.info(f"This ep avg reward: {np.sum(rewards) / (MAX_CYCLES*3)}")
+                        logger.info(f"Num of collisions: {(rewards > 0).sum() / (MAX_CYCLES*3)}")
                     except Exception:
                         print("logfile permission error__", endl="")
                     break
