@@ -106,6 +106,8 @@ def train(ctx, visualize):
 
     import ray
 
+    PLAYER_STRAT = "random"
+
     @ray.remote
     def ray_train(name=None):
 
@@ -117,6 +119,16 @@ def train(ctx, visualize):
         logger = logging.getLogger("both")
 
         filename = worker_config["handlers"]["r_file"]["filename"]
+
+        wandb.init(
+            project="customized_mae_agents",
+            entity="ju-ai-thesis",
+            config={
+                "filename": filename,
+                "strategy": PLAYER_STRAT
+                # TODO: Add hyperparameters
+            },
+        )
         # FIXME: Get number of actions from gym action space
         n_actions = 5
 
@@ -171,7 +183,7 @@ def train(ctx, visualize):
                         good_agent=("agent" in agent),
                         steps_done=steps_done,
                         random_action=env.action_space("agent_0").sample(),
-                        player_strat="random",
+                        player_strat=PLAYER_STRAT,
                     )
                     actions[agent] = action
                     env.step(action.item())
@@ -196,12 +208,16 @@ def train(ctx, visualize):
                 if done:  # FIXME: is there a reason for two checks lol?
                     episode_durations.append(t + 1)
                     episode_rewards += rewards[-4:]
-                    try:
-                        logger.info(f"Ep reward: {episode_rewards[-4:]}")
-                        logger.info(f"This ep avg reward: {np.sum(rewards) / (MAX_CYCLES*3)}")
-                        logger.info(f"Num of collisions: {(np.array(rewards) > 0).sum() // (3)}")
-                    except Exception:
-                        print("logfile permission error__", endl="")
+
+                    log_data = {"episode_rewards": episode_rewards[-4:], 
+                                "avg_ep_reward": np.sum(rewards) / (MAX_CYCLES*3),
+                                "num_collisions": (rewards > 0).sum() / (MAX_CYCLES*3)
+                    }
+                    logger.info(f"Ep reward: {log_data['episode_rewards']}")
+                    logger.info(f"This ep avg reward: {log_data['avg_ep_reward']}")
+                    logger.info(f"Num of collisions: {log_data['num_collisions']}")
+                    wandb.log(log_data)
+
                     break
 
         logger.info("Complete Ep reward: \n" + pformat(np.asarray(episode_rewards)))

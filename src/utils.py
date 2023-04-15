@@ -63,7 +63,7 @@ def get_logging_conf(filename=None):
     with open(get_project_root("logs/config.yaml"), "rt") as f:
         config = yaml.safe_load(f.read())
     if filename is not None:
-        filename += "_" + str(datetime.datetime.now())
+        filename += "_" + datetime.datetime.now().strftime("%b%d_%H%M_%S%f")
         filename = sanitize_filename(filename)
         config["handlers"]["file"]["filename"] = f"logs/{filename}.log"
         config["handlers"]["r_file"]["filename"] = f"logs/{filename}.log"
