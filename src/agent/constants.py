@@ -28,6 +28,6 @@ import torch
 
 device = torch.device(DEVICE)
 
-TEST_RAY_BATCHES = 2
+TEST_RAY_BATCHES = 3
 TEST_EPS_NUM = 1
-TEST_MAX_CYCLES = 4000
+TEST_MAX_CYCLES = 5000
