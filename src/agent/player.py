@@ -394,7 +394,7 @@ def test(ctx, adversary_model, strategy, visualize):
         # TODO: Aggregate and Log Rewards
         logger.info("Complete Ep reward: \n" + pformat(np.asarray(episode_rewards)))
         logger.info(f"This ep avg reward: {np.sum(rewards) / (MAX_CYCLES*3)}")
-        logger.info(f"Num of collisions: {(rewards > 0).sum() / (MAX_CYCLES*3)}")
+        logger.info(f"Num of collisions: {(np.sum(rewards) > 0).sum() // (3)}")
 
         return torch.tensor(episode_rewards, dtype=torch.float)
 

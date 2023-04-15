@@ -20,7 +20,7 @@ ACTIONS = {
     "move_up": 4,
 }
 
-RAY_BATCHES = 10
+RAY_BATCHES = 2
 EPS_NUM = 1
 MAX_CYCLES = 4000
 

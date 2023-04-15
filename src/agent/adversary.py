@@ -109,7 +109,7 @@ def train(ctx, visualize):
     @ray.remote
     def ray_train(name=None):
 
-        
+
 
 
 
@@ -131,7 +131,7 @@ def train(ctx, visualize):
             # track hyperparameters and run metadata
             config={
                 "filename": filename,
-                
+
             },
         )
 
@@ -214,7 +214,7 @@ def train(ctx, visualize):
                     try:
                         logger.info(f"Ep reward: {episode_rewards[-4:]}")
                         logger.info(f"This ep avg reward: {np.sum(rewards) / (MAX_CYCLES*3)}")
-                        logger.info(f"Num of collisions: {(np.array(rewards) > 0).sum() / (3)}")
+                        logger.info(f"Num of collisions: {(np.array(rewards) > 0).sum() // (3)}")
                     except Exception:
                         print("logfile permission error__", endl="")
                     break
