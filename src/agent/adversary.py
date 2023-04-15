@@ -109,10 +109,6 @@ def train(ctx, visualize):
     @ray.remote
     def ray_train(name=None):
 
-
-
-
-
         if not name:
             name = int(random.random() * 10000)
 
@@ -123,17 +119,6 @@ def train(ctx, visualize):
         filename = worker_config["handlers"]["r_file"]["filename"]
         # FIXME: Get number of actions from gym action space
         n_actions = 5
-
-        wandb.init(
-        # set the wandb project where this run will be logged
-            project="customized_mae_agents",
-            entity="ju-ai-thesis",
-            # track hyperparameters and run metadata
-            config={
-                "filename": filename,
-
-            },
-        )
 
         env = env_creator(render_mode="human" if visualize else "rgb_array")
         env.reset()

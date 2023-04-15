@@ -21,8 +21,8 @@ ACTIONS = {
 }
 
 RAY_BATCHES = 2
-EPS_NUM = 1
-MAX_CYCLES = 4000
+EPS_NUM = 50
+MAX_CYCLES = 400
 
 import torch
 
