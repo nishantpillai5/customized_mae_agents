@@ -206,7 +206,7 @@ class Scenario(BaseScenario):
 
         # for p in range(world.dim_p):
         #    x = abs(agent.state.p_pos[p])
-            # rew -= bound(x)
+        # rew -= bound(x)
         return rew
 
     def observation(self, agent, world):

@@ -20,10 +20,14 @@ ACTIONS = {
     "move_up": 4,
 }
 
-RAY_BATCHES = 2
+RAY_BATCHES = 1
 EPS_NUM = 50
 MAX_CYCLES = 400
 
 import torch
 
 device = torch.device(DEVICE)
+
+TEST_RAY_BATCHES = 1
+TEST_EPS_NUM = 50
+TEST_MAX_CYCLES = 400

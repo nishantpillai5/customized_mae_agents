@@ -303,9 +303,17 @@ def test(ctx, adversary_model, strategy, visualize):
     import numpy as np
     import torch
 
-    from src.agent.constants import AGENTS, EPS_NUM, MAX_CYCLES, RAY_BATCHES, device
+    from src.agent.constants import AGENTS, EPS_NUM, MAX_CYCLES, RAY_BATCHES, device, TEST_EPS_NUM, TEST_MAX_CYCLES, TEST_RAY_BATCHES
     from src.agent.utils import DQN, StateCache, select_action
     from src.utils import get_logging_conf
+
+    RAY_BATCHES = TEST_RAY_BATCHES 
+    EPS_NUM = TEST_EPS_NUM 
+    MAX_CYCLES = TEST_MAX_CYCLES
+
+    print("Running with", RAY_BATCHES, "baches")
+    print("Running for", EPS_NUM, "episodes")
+    print("An episode is", MAX_CYCLES, "cycles") 
 
     def env_creator(render_mode="rgb_array"):
         from src.world import world_utils

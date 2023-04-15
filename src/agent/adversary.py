@@ -63,6 +63,14 @@ def eval(ctx, filepaths, visualize):
 
 @click.command()
 @click.option(
+    "--not-testing",
+    "-t",
+    is_flag=True,
+    show_default=True,
+    default=False,
+    help="Testing",
+)
+@click.option(
     "--visualize",
     "-v",
     is_flag=True,
@@ -71,14 +79,14 @@ def eval(ctx, filepaths, visualize):
     help="Visualize",
 )
 @click.pass_context
-def train(ctx, visualize):
+def train(ctx, testing, visualize):
     import random
-    import wandb
     from itertools import count
 
     import torch
     import torch.optim as optim
 
+    import wandb
     from src.agent.constants import (
         AGENTS,
         EPS_NUM,
@@ -87,6 +95,9 @@ def train(ctx, visualize):
         RAY_BATCHES,
         REPLAY_MEM,
         TAU,
+        TEST_EPS_NUM,
+        TEST_MAX_CYCLES,
+        TEST_RAY_BATCHES,
         device,
     )
     from src.agent.utils import (
@@ -97,6 +108,10 @@ def train(ctx, visualize):
         print_rewards,
         select_action,
     )
+
+    print("Running with", RAY_BATCHES, "baches")
+    print("Running for", EPS_NUM, "episodes")
+    print("An episode is", MAX_CYCLES, "cycles") 
 
     def env_creator(render_mode="rgb_array"):
         from src.world import world_utils
@@ -110,7 +125,6 @@ def train(ctx, visualize):
 
     @ray.remote
     def ray_train(name=None):
-
         if not name:
             name = int(random.random() * 10000)
 
@@ -120,7 +134,7 @@ def train(ctx, visualize):
 
         filename = worker_config["handlers"]["r_file"]["filename"]
 
-        wandb.init(
+        wandb_run = wandb.init(
             project="customized_mae_agents",
             entity="ju-ai-thesis",
             config={
@@ -208,10 +222,12 @@ def train(ctx, visualize):
                 if done:  # FIXME: is there a reason for two checks lol?
                     episode_durations.append(t + 1)
                     episode_rewards += rewards[-4:]
-
-                    log_data = {"episode_rewards": episode_rewards[-4:], 
-                                "avg_ep_reward": np.sum(rewards) / (MAX_CYCLES*3),
-                                "num_collisions": (rewards > 0).sum() / (MAX_CYCLES*3)
+                    rewards = np.array(rewards)
+                    log_data = {
+                        "episode_rewards": episode_rewards[-4:],
+                        "avg_ep_reward": np.sum(rewards) / (MAX_CYCLES * 3),
+                        "num_collisions": (rewards > 0).sum() // (3),
+                        "distance_penalty": (rewards[(rewards < 0)]),
                     }
                     logger.info(f"Ep reward: {log_data['episode_rewards']}")
                     logger.info(f"This ep avg reward: {log_data['avg_ep_reward']}")
@@ -224,6 +240,10 @@ def train(ctx, visualize):
         # Save model
         torch.save(policy_net.state_dict(), filename + "_policy.pth")
         torch.save(target_net.state_dict(), filename + "_target.pth")
+
+        artifact = wandb.Artifact(name=filename, type="model")
+        artifact.add_file(local_path=filename + "_policy.pth")
+        wandb_run.log_artifact(artifact)
 
         return torch.tensor(episode_rewards, dtype=torch.float)
 
