@@ -73,6 +73,7 @@ def eval(ctx, filepaths, visualize):
 @click.pass_context
 def train(ctx, visualize):
     import random
+    import wandb
     from itertools import count
 
     import torch
@@ -107,6 +108,11 @@ def train(ctx, visualize):
 
     @ray.remote
     def ray_train(name=None):
+
+        
+
+
+
         if not name:
             name = int(random.random() * 10000)
 
@@ -117,6 +123,17 @@ def train(ctx, visualize):
         filename = worker_config["handlers"]["r_file"]["filename"]
         # FIXME: Get number of actions from gym action space
         n_actions = 5
+
+        wandb.init(
+        # set the wandb project where this run will be logged
+            project="customized_mae_agents",
+            entity="ju-ai-thesis",
+            # track hyperparameters and run metadata
+            config={
+                "filename": filename,
+                
+            },
+        )
 
         env = env_creator(render_mode="human" if visualize else "rgb_array")
         env.reset()
@@ -197,7 +214,7 @@ def train(ctx, visualize):
                     try:
                         logger.info(f"Ep reward: {episode_rewards[-4:]}")
                         logger.info(f"This ep avg reward: {np.sum(rewards) / (MAX_CYCLES*3)}")
-                        logger.info(f"Num of collisions: {(rewards > 0).sum() / (MAX_CYCLES*3)}")
+                        logger.info(f"Num of collisions: {(np.array(rewards) > 0).sum() / (3)}")
                     except Exception:
                         print("logfile permission error__", endl="")
                     break
