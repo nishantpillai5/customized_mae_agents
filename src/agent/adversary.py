@@ -63,14 +63,6 @@ def eval(ctx, filepaths, visualize):
 
 @click.command()
 @click.option(
-    "--not-testing",
-    "-t",
-    is_flag=True,
-    show_default=True,
-    default=False,
-    help="Testing",
-)
-@click.option(
     "--visualize",
     "-v",
     is_flag=True,
@@ -79,7 +71,7 @@ def eval(ctx, filepaths, visualize):
     help="Visualize",
 )
 @click.pass_context
-def train(ctx, testing, visualize):
+def train(ctx, visualize):
     import random
     from itertools import count
 
@@ -121,7 +113,7 @@ def train(ctx, testing, visualize):
 
     import ray
 
-    PLAYER_STRAT = "random"
+    PLAYER_STRAT = "evasive"
 
     @ray.remote
     def ray_train(name=None):
@@ -227,7 +219,7 @@ def train(ctx, testing, visualize):
                         "episode_rewards": episode_rewards[-4:],
                         "avg_ep_reward": np.sum(rewards) / (MAX_CYCLES * 3),
                         "num_collisions": (rewards > 0).sum() // (3),
-                        "distance_penalty": (rewards[(rewards < 0)]),
+                        "distance_penalty": (np.sum(rewards[(rewards < 0)]) / (MAX_CYCLES * 3)),
                     }
                     logger.info(f"Ep reward: {log_data['episode_rewards']}")
                     logger.info(f"This ep avg reward: {log_data['avg_ep_reward']}")
@@ -241,7 +233,7 @@ def train(ctx, testing, visualize):
         torch.save(policy_net.state_dict(), filename + "_policy.pth")
         torch.save(target_net.state_dict(), filename + "_target.pth")
 
-        artifact = wandb.Artifact(name=filename, type="model")
+        artifact = wandb.Artifact(name=filename[filename.index("/")+1:], type="model")
         artifact.add_file(local_path=filename + "_policy.pth")
         wandb_run.log_artifact(artifact)
 

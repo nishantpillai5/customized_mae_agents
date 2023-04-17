@@ -20,8 +20,8 @@ ACTIONS = {
     "move_up": 4,
 }
 
-RAY_BATCHES = 1
-EPS_NUM = 50
+RAY_BATCHES = 2
+EPS_NUM = 150
 MAX_CYCLES = 400
 
 import torch
