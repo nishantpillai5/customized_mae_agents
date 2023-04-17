@@ -32,8 +32,21 @@ Cross tests: for every learned enemy net, test on the other strategies (learning
 Cross learning: for every learned enemy net, train on the other strategies (learning ON) and see if and how quickly scores rise back to the corresponding base test
 
 
+# Hyper parameter optimization
 
+HPO to be performed on
 
-# Optimization
+- Batch size
+- Gamma
+- Episode start
+- Episode end
+- Episode decay
+- Temperature Tau
+- Learning rate
+- Replay memory
 
-??
+with [bayesian optimization](https://github.com/fmfn/BayesianOptimization) 
+OR
+with [genetic algorithms](https://optuna.readthedocs.io/en/stable/index.html)
+
+[More Examples](https://docs.ray.io/en/latest/tune/examples/hpo-frameworks.html)
