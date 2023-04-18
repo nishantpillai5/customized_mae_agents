@@ -86,7 +86,11 @@ def train(ctx, visualize, desc):
     import wandb
     from src.agent.constants import (
         AGENTS,
+        EPS_DECAY,
+        EPS_END,
         EPS_NUM,
+        EPS_START,
+        GAMMA,
         LR,
         MAX_CYCLES,
         RAY_BATCHES,
@@ -108,7 +112,7 @@ def train(ctx, visualize, desc):
 
     print("Running with", RAY_BATCHES, "baches")
     print("Running for", EPS_NUM, "episodes")
-    print("An episode is", MAX_CYCLES, "cycles") 
+    print("An episode is", MAX_CYCLES, "cycles")
 
     def env_creator(render_mode="rgb_array"):
         from src.world import world_utils
@@ -138,12 +142,17 @@ def train(ctx, visualize, desc):
                 "description": desc,
                 "filename": filename,
                 "strategy": PLAYER_STRAT,
+                # Hyperparameters
                 "eps_num": EPS_NUM,
                 "learning_rate": LR,
                 "max_cycles": MAX_CYCLES,
                 "ray_batches": RAY_BATCHES,
                 "replay": REPLAY_MEM,
                 "tau": TAU,
+                "gamma": GAMMA,
+                "eps_start": EPS_START,
+                "eps_end": EPS_END,
+                "eps_decay": EPS_DECAY,
             },
         )
         # FIXME: Get number of actions from gym action space
@@ -230,7 +239,9 @@ def train(ctx, visualize, desc):
                         "episode_rewards": episode_rewards[-4:],
                         "avg_ep_reward": np.sum(rewards) / (MAX_CYCLES * 3),
                         "num_collisions": (rewards > 0).sum() // (3),
-                        "distance_penalty": (np.sum(rewards[(rewards < 0)]) / (MAX_CYCLES * 3)),
+                        "distance_penalty": (
+                            np.sum(rewards[(rewards < 0)]) / (MAX_CYCLES * 3)
+                        ),
                     }
                     logger.info(f"Ep reward: {log_data['episode_rewards']}")
                     logger.info(f"This ep avg reward: {log_data['avg_ep_reward']}")
@@ -244,7 +255,9 @@ def train(ctx, visualize, desc):
         torch.save(policy_net.state_dict(), filename + "_policy.pth")
         torch.save(target_net.state_dict(), filename + "_target.pth")
 
-        artifact = wandb.Artifact(name=filename[filename.index("/")+1:], type="model")
+        artifact = wandb.Artifact(
+            name=filename[filename.index("/") + 1 :], type="model"
+        )
         artifact.add_file(local_path=filename + "_policy.pth")
         wandb_run.log_artifact(artifact)
 
