@@ -70,8 +70,13 @@ def eval(ctx, filepaths, visualize):
     default=False,
     help="Visualize",
 )
+@click.option(
+    "--desc",
+    "-d",
+    default="",
+)
 @click.pass_context
-def train(ctx, visualize):
+def train(ctx, visualize, desc):
     import random
     from itertools import count
 
@@ -130,9 +135,15 @@ def train(ctx, visualize):
             project="customized_mae_agents",
             entity="ju-ai-thesis",
             config={
+                "description": desc,
                 "filename": filename,
-                "strategy": PLAYER_STRAT
-                # TODO: Add hyperparameters
+                "strategy": PLAYER_STRAT,
+                "eps_num": EPS_NUM,
+                "learning_rate": LR,
+                "max_cycles": MAX_CYCLES,
+                "ray_batches": RAY_BATCHES,
+                "replay": REPLAY_MEM,
+                "tau": TAU,
             },
         )
         # FIXME: Get number of actions from gym action space
