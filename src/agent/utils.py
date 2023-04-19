@@ -7,7 +7,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 
-from src.agent.constants import BATCH_SIZE, EPS_DECAY, EPS_END, EPS_START, GAMMA, device
+from src.agent.constants import cfg, device
 from src.agent.player import get_player_action
 
 Transition = namedtuple("Transition", ("state", "action", "next_state", "reward"))
@@ -63,10 +63,10 @@ class DQN(nn.Module):
         return self.layer4(x)
 
 
-def optimize_model(optimizer, memory, policy_net, target_net):
-    if len(memory) < BATCH_SIZE:
+def optimize_model(optimizer, memory, policy_net, target_net, cfg=cfg):
+    if len(memory) < cfg["batch_size"]:
         return
-    transitions = memory.sample(BATCH_SIZE)
+    transitions = memory.sample(cfg["batch_size"])
     # Transpose the batch (see https://stackoverflow.com/a/19343/3343043 for
     # detailed explanation). This converts batch-array of Transitions
     # to Transition of batch-arrays.
@@ -94,11 +94,11 @@ def optimize_model(optimizer, memory, policy_net, target_net):
     # on the "older" target_net; selecting their best reward with max(1)[0].
     # This is merged based on the mask, such that we'll have either the expected
     # state value or 0 in case the state was final.
-    next_state_values = torch.zeros(BATCH_SIZE, device=device)
+    next_state_values = torch.zeros(cfg["batch_size"], device=device)
     with torch.no_grad():
         next_state_values[non_final_mask] = target_net(non_final_next_states).max(1)[0]
     # Compute the expected Q values
-    expected_state_action_values = (next_state_values * GAMMA) + reward_batch
+    expected_state_action_values = (next_state_values * cfg["gamma"]) + reward_batch
 
     # Compute Huber loss
     criterion = nn.SmoothL1Loss()
@@ -133,6 +133,7 @@ def select_action(
     steps_done=0,
     random_action=None,
     player_strat=None,
+    cfg=cfg
 ):
     override = random_action if player_strat is None else None
     player_action = get_player_action(state, strategy=player_strat, override=override)
@@ -148,8 +149,8 @@ def select_action(
         )
     else:
         sample = random.random()
-        eps_threshold = EPS_END + (EPS_START - EPS_END) * math.exp(
-            -1.0 * steps_done / EPS_DECAY
+        eps_threshold = cfg["eps_end"] + (cfg["eps_start"] - cfg["eps_end"]) * math.exp(
+            -1.0 * steps_done / cfg["eps_decay"]
         )
         steps_done += 1
         if sample > eps_threshold:

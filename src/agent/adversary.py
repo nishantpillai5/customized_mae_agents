@@ -29,13 +29,13 @@ def adversary():
 def eval(ctx, filepaths, visualize):
     import torch
 
-    from src.agent.constants import MAX_CYCLES, device
+    from src.agent.constants import cfg, device
     from src.agent.utils import DQN
 
     def env_creator(render_mode="rgb_array"):
         from src.world import world_utils
 
-        env = world_utils.env(render_mode=render_mode, max_cycles=MAX_CYCLES)
+        env = world_utils.env(render_mode=render_mode, max_cycles=cfg["max_cycles"])
         return env
 
     env = env_creator(render_mode="human" if visualize else "rgb_array")
@@ -74,7 +74,6 @@ def eval(ctx, filepaths, visualize):
     "--desc",
     "-d",
     default="",
-    help="Description of the run",
 )
 @click.pass_context
 def train(ctx, visualize, desc):
@@ -83,43 +82,25 @@ def train(ctx, visualize, desc):
 
     import torch
     import torch.optim as optim
-    import wandb
 
-    from src.agent.constants import (
-        AGENTS,
-        EPS_DECAY,
-        EPS_END,
-        EPS_NUM,
-        EPS_START,
-        GAMMA,
-        LR,
-        MAX_CYCLES,
-        RAY_BATCHES,
-        BATCH_SIZE,
-        REPLAY_MEM,
-        TAU,
-        TEST_EPS_NUM,
-        TEST_MAX_CYCLES,
-        TEST_RAY_BATCHES,
-        device,
-    )
+    import wandb
+    from src.agent.constants import AGENTS, cfg, device
     from src.agent.utils import (
         DQN,
         ReplayMemory,
         StateCache,
         optimize_model,
-        print_rewards,
         select_action,
     )
 
-    print("Running with", RAY_BATCHES, "baches")
-    print("Running for", EPS_NUM, "episodes")
-    print("An episode is", MAX_CYCLES, "cycles")
+    print("Running with", cfg["ray_batches"], "baches")
+    print("Running for", cfg["eps_num"], "episodes")
+    print("An episode is", cfg["max_cycles"], "cycles")
 
     def env_creator(render_mode="rgb_array"):
         from src.world import world_utils
 
-        env = world_utils.env(render_mode=render_mode, max_cycles=MAX_CYCLES)
+        env = world_utils.env(render_mode=render_mode, max_cycles=cfg["max_cycles"])
         return env
 
     import ray
@@ -145,17 +126,7 @@ def train(ctx, visualize, desc):
                 "filename": filename,
                 "strategy": PLAYER_STRAT,
                 # Hyperparameters
-                "eps_num": EPS_NUM,
-                "learning_rate": LR,
-                "max_cycles": MAX_CYCLES,
-                "ray_batches": RAY_BATCHES,
-                "batch_size": BATCH_SIZE,
-                "replay": REPLAY_MEM,
-                "tau": TAU,
-                "gamma": GAMMA,
-                "eps_start": EPS_START,
-                "eps_end": EPS_END,
-                "eps_decay": EPS_DECAY,
+                **cfg,
             },
         )
         # FIXME: Get number of actions from gym action space
@@ -173,8 +144,10 @@ def train(ctx, visualize, desc):
         target_net = DQN(n_observations, n_actions).to(device)
         target_net.load_state_dict(policy_net.state_dict())
 
-        optimizer = optim.AdamW(policy_net.parameters(), lr=LR, amsgrad=True)
-        memory = ReplayMemory(REPLAY_MEM)
+        optimizer = optim.AdamW(
+            policy_net.parameters(), lr=cfg["learning_rate"], amsgrad=True
+        )
+        memory = ReplayMemory(cfg["replay_mem"])
         steps_done = 0
 
         episode_durations = []
@@ -182,7 +155,7 @@ def train(ctx, visualize, desc):
 
         state_cache = StateCache()
 
-        for i_episode in range(EPS_NUM):
+        for i_episode in range(cfg["eps_num"]):
             env.reset()
             env.render()
             state, reward, _, _, _ = env.last()
@@ -224,13 +197,15 @@ def train(ctx, visualize, desc):
                             observation,
                             previous_state[1],
                         )
-                        optimize_model(optimizer, memory, policy_net, target_net)
+                        optimize_model(optimizer, memory, policy_net, target_net, cfg=cfg)
                         target_net_state_dict = target_net.state_dict()
                         policy_net_state_dict = policy_net.state_dict()
                         for key in policy_net_state_dict:
                             target_net_state_dict[key] = policy_net_state_dict[
                                 key
-                            ] * TAU + target_net_state_dict[key] * (1 - TAU)
+                            ] * cfg["tau"] + target_net_state_dict[key] * (
+                                1 - cfg["tau"]
+                            )
                         target_net.load_state_dict(target_net_state_dict)
                 env.render()
 
@@ -240,10 +215,10 @@ def train(ctx, visualize, desc):
                     rewards = np.array(rewards)
                     log_data = {
                         "episode_rewards": episode_rewards[-4:],
-                        "avg_ep_reward": np.sum(rewards) / (MAX_CYCLES * 3),
+                        "avg_ep_reward": np.sum(rewards) / (cfg["max_cycles"] * 3),
                         "num_collisions": (rewards > 0).sum() // (3),
                         "distance_penalty": (
-                            np.sum(rewards[(rewards < 0)]) / (MAX_CYCLES * 3)
+                            np.sum(rewards[(rewards < 0)]) / (cfg["max_cycles"] * 3)
                         ),
                     }
                     logger.info(f"Ep reward: {log_data['episode_rewards']}")
@@ -268,7 +243,7 @@ def train(ctx, visualize, desc):
 
     task_handles = []
     try:
-        for i in range(1, RAY_BATCHES + 1):
+        for i in range(1, cfg["ray_batches"] + 1):
             task_handles.append(ray_train.remote(name=i))
 
         output = ray.get(task_handles)

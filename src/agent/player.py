@@ -209,126 +209,7 @@ def shifty_player(state):
     - Enemies should find a particular set of obstacles to guard from a distance, to induce the player into it
     - They should also learn to put one of themselves close to the other possible player target positions
     """
-    """
-    Landmark positions:
-      [[-0.9 , -0.9 ],
-       [ 0.9 , -0.9 ],
-       [-0.9 ,  0.9 ],
-       [ 0.9 ,  0.9 ],
-       [-0.4 ,  0.  ],
-       [-0.36,  0.2 ],
-       [ 0.  ,  0.14],
-       [ 0.16,  0.1 ],
-       [ 0.24, -0.06]]
-    """
-
-    # First thing, we apply the pathfinding function
-    # It's very simple: move to that target that we'll find below,
-    #  but be affected by anti-gravity from the enemies
-    min_dist = min(
-        [
-            np.linalg.norm(np.array((state[0][i].item(), state[0][i + 1].item())))
-            for i in range(22, 28, 2)
-        ]
-    )
-    if random.random() > min_dist:
-        return evasive_player(state)
-
-    # Fixed target positions for the player to use
-    positions = [
-        (0, -0.9),  # sides
-        (0, 0.9),
-        (-0.9, 0),
-        (0.9, 0),
-        (-0.38, 0.1),  # tunnel between [-0.4 ,  0.  ] and [-0.36,  0.2 ]
-        (-0.41, 0.09),
-        (-0.35, 0.11),
-        (-0.18, 0.17),  # between [-0.36,  0.2 ] and [ 0.  ,  0.14]
-        (-0.2, 0.23),
-        (-0.16, 0.11),
-        (0.8, 0.12),  # between [ 0.  ,  0.14] and [ 0.16,  0.1 ]
-        (0.9, 0.06),
-        (0.7, 0.18),
-        (0.19, 0.02),  # between [ 0.16,  0.1 ] and [ 0.24, -0.06]
-        (0.27, -0.14),
-        (0.11, 0.18),
-    ]
-
-    # Sorting positions by distance to the player
-    distance_sorting = np.argsort(
-        [
-            np.linalg.norm(
-                np.array(pos) - np.array((state[0][2].item(), state[0][3].item()))
-            )
-            for pos in positions
-        ]
-    )
-    # The player first checks for these 5 positions: 3 closest and 2 furthest
-    current_closest = [positions[i] for i in distance_sorting[:3]]
-    current_distant = [positions[distance_sorting[-2]], positions[distance_sorting[-1]]]
-    first_check = current_closest + current_distant
-
-    # Now out of these let's check the distance from each to the closest enemy
-    min_enemy_dists = [
-        min(
-            np.linalg.norm(
-                np.array(pos)
-                - np.array(
-                    (
-                        state[0][i].item() + state[0][2].item(),
-                        state[0][i + 1].item() + state[0][3].item(),
-                    )
-                )
-            )
-            for i in range(22, 28, 2)
-        )
-        for pos in first_check
-    ]
-
-    # Now if the maximum among those distances is high enough, let's move there
-    if np.max(min_enemy_dists) > 0.5:
-        target = first_check[np.argmax(min_enemy_dists)]
-    # Otherwise, re-check using every position, move to the furthest away from the enemies
-    else:
-        target = positions[
-            np.argmax(
-                [
-                    min(
-                        np.linalg.norm(
-                            np.array(pos)
-                            - np.array(
-                                (
-                                    state[0][i].item() + state[0][2].item(),
-                                    state[0][i + 1].item() + state[0][3].item(),
-                                )
-                            )
-                        )
-                        for i in range(22, 28, 2)
-                    )
-                    for pos in positions
-                ]
-            )
-        ]
-
-    # Now that the target position is acquired, let's just move there
-    # Ddistance for the player to target
-    dist_x = target[0] - state[0][2].item()
-    dist_y = target[1] - state[0][3].item()
-
-    # Now we move towards that target
-    action = ACTIONS["no_action"]
-    if abs(dist_x) > abs(dist_y):
-        if dist_x > 0:
-            action = ACTIONS["move_right"]
-        elif dist_x < 0:
-            action = ACTIONS["move_left"]
-    elif abs(dist_x) < abs(dist_y):
-        if dist_y > 0:
-            action = ACTIONS["move_up"]
-        elif dist_y < 0:
-            action = ACTIONS["move_down"]
-
-    return action
+    return None
 
 
 def dqn_player(state):
@@ -429,31 +310,19 @@ def test(ctx, adversary_model, strategy, visualize):
     import numpy as np
     import torch
 
-    from src.agent.constants import (
-        AGENTS,
-        EPS_NUM,
-        MAX_CYCLES,
-        RAY_BATCHES,
-        TEST_EPS_NUM,
-        TEST_MAX_CYCLES,
-        TEST_RAY_BATCHES,
-        device,
-    )
+    from src.agent.constants import AGENTS, device, test_cfg
     from src.agent.utils import DQN, StateCache, select_action
     from src.utils import get_logging_conf
 
-    RAY_BATCHES = TEST_RAY_BATCHES
-    EPS_NUM = TEST_EPS_NUM
-    MAX_CYCLES = TEST_MAX_CYCLES
-
-    print("Running with", RAY_BATCHES, "baches")
-    print("Running for", EPS_NUM, "episodes")
-    print("An episode is", MAX_CYCLES, "cycles")
+    cfg = test_cfg
+    print("Running with", cfg["ray_batches"], "baches")
+    print("Running for", cfg["eps_num"], "episodes")
+    print("An episode is", cfg["max_cycles"], "cycles")
 
     def env_creator(render_mode="rgb_array"):
         from src.world import world_utils
 
-        env = world_utils.env(render_mode=render_mode, max_cycles=MAX_CYCLES)
+        env = world_utils.env(render_mode=render_mode, max_cycles=cfg["max_cycles"])
         return env
 
     import ray
@@ -490,7 +359,7 @@ def test(ctx, adversary_model, strategy, visualize):
 
         state_cache = StateCache()
 
-        for i_episode in range(EPS_NUM):
+        for i_episode in range(cfg["eps_num"]):
             env.reset()
             env.render()
             state, reward, _, _, _ = env.last()
@@ -536,14 +405,14 @@ def test(ctx, adversary_model, strategy, visualize):
 
         # TODO: Aggregate and Log Rewards
         logger.info("Complete Ep reward: \n" + pformat(np.asarray(episode_rewards)))
-        logger.info(f"This ep avg reward: {np.sum(rewards) / (MAX_CYCLES*3)}")
+        logger.info(f"This ep avg reward: {np.sum(rewards) / (cfg['max_cycles'] * 3)}")
         logger.info(f"Num of collisions: {(np.sum(rewards) > 0).sum() // (3)}")
 
         return torch.tensor(episode_rewards, dtype=torch.float)
 
     task_handles = []
     try:
-        for i in range(1, RAY_BATCHES + 1):
+        for i in range(1, cfg["ray_batches"] + 1):
             task_handles.append(ray_test.remote(name=i))
 
         output = ray.get(task_handles)

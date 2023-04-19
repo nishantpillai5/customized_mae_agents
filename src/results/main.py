@@ -29,21 +29,14 @@ def record(ctx, adversary_model, strategy):
     import torch
     from gymnasium.utils.save_video import save_video
 
-    from src.agent.constants import (
-        ACTIONS,
-        AGENTS,
-        EPS_NUM,
-        MAX_CYCLES,
-        RAY_BATCHES,
-        device,
-    )
+    from src.agent.constants import AGENTS, cfg, device
     from src.agent.utils import DQN, StateCache, select_action
     from src.utils import get_logging_conf
 
     def env_creator(render_mode="rgb_array"):
         from src.world import world_utils
 
-        env = world_utils.env(render_mode=render_mode, max_cycles=MAX_CYCLES)
+        env = world_utils.env(render_mode=render_mode, max_cycles=cfg["max_cycles"])
         return env
 
     worker_config = get_logging_conf(f"record")
@@ -73,7 +66,7 @@ def record(ctx, adversary_model, strategy):
 
     state_cache = StateCache()
 
-    for i_episode in range(EPS_NUM):
+    for i_episode in range(cfg["eps_num"]):
         env.reset()
         env.render()
         state, reward, _, _, _ = env.last()
