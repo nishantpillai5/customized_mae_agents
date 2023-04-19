@@ -74,6 +74,7 @@ def eval(ctx, filepaths, visualize):
     "--desc",
     "-d",
     default="",
+    help="Description of the run",
 )
 @click.pass_context
 def train(ctx, visualize, desc):
