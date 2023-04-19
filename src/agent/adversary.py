@@ -105,7 +105,7 @@ def train(ctx, visualize, desc):
 
     import ray
 
-    PLAYER_STRAT = "evasive"
+    PLAYER_STRAT = "multiple"
 
     @ray.remote
     def ray_train(name=None):
@@ -156,6 +156,10 @@ def train(ctx, visualize, desc):
         state_cache = StateCache()
 
         for i_episode in range(cfg["eps_num"]):
+            if PLAYER_STRAT != "multiple":
+                player_agent_strat = PLAYER_STRAT
+            else:
+                player_agent_strat = ["evasive", "hiding", "shifty"][i_episode % 3]
             env.reset()
             env.render()
             state, reward, _, _, _ = env.last()
@@ -185,7 +189,7 @@ def train(ctx, visualize, desc):
                         good_agent=("agent" in agent),
                         steps_done=steps_done,
                         random_action=env.action_space("agent_0").sample(),
-                        player_strat=PLAYER_STRAT,
+                        player_strat=player_agent_strat,
                     )
                     actions[agent] = action
                     env.step(action.item())
