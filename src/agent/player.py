@@ -158,7 +158,7 @@ def hiding_player(state):
         self_pos[0] + final_dir[0] * 2.83 * 0.3,
         self_pos[1] + final_dir[1] * np.pi * 0.3,
     )
-    if self_pos[0] > 0.98 and random.random() < self_pos[0] * .5:
+    if self_pos[0] > 0.98 and random.random() < self_pos[0] * 0.5:
         target_polar = (0, target_polar[1])
     target_cart = polar_to_cart(target_polar[0], target_polar[1])
 
@@ -209,7 +209,126 @@ def shifty_player(state):
     - Enemies should find a particular set of obstacles to guard from a distance, to induce the player into it
     - They should also learn to put one of themselves close to the other possible player target positions
     """
-    return None
+    """
+    Landmark positions:
+      [[-0.9 , -0.9 ],
+       [ 0.9 , -0.9 ],
+       [-0.9 ,  0.9 ],
+       [ 0.9 ,  0.9 ],
+       [-0.4 ,  0.  ],
+       [-0.36,  0.2 ],
+       [ 0.  ,  0.14],
+       [ 0.16,  0.1 ],
+       [ 0.24, -0.06]]
+    """
+
+    # First thing, we apply the pathfinding function
+    # It's very simple: move to that target that we'll find below,
+    #  but be affected by anti-gravity from the enemies
+    min_dist = min(
+        [
+            np.linalg.norm(np.array((state[0][i].item(), state[0][i + 1].item())))
+            for i in range(22, 28, 2)
+        ]
+    )
+    if random.random() > min_dist:
+        return evasive_player(state)
+
+    # Fixed target positions for the player to use
+    positions = [
+        (0, -0.9),  # sides
+        (0, 0.9),
+        (-0.9, 0),
+        (0.9, 0),
+        (-0.38, 0.1),  # tunnel between [-0.4 ,  0.  ] and [-0.36,  0.2 ]
+        (-0.41, 0.09),
+        (-0.35, 0.11),
+        (-0.18, 0.17),  # between [-0.36,  0.2 ] and [ 0.  ,  0.14]
+        (-0.2, 0.23),
+        (-0.16, 0.11),
+        (0.8, 0.12),  # between [ 0.  ,  0.14] and [ 0.16,  0.1 ]
+        (0.9, 0.06),
+        (0.7, 0.18),
+        (0.19, 0.02),  # between [ 0.16,  0.1 ] and [ 0.24, -0.06]
+        (0.27, -0.14),
+        (0.11, 0.18),
+    ]
+
+    # Sorting positions by distance to the player
+    distance_sorting = np.argsort(
+        [
+            np.linalg.norm(
+                np.array(pos) - np.array((state[0][2].item(), state[0][3].item()))
+            )
+            for pos in positions
+        ]
+    )
+    # The player first checks for these 5 positions: 3 closest and 2 furthest
+    current_closest = [positions[i] for i in distance_sorting[:3]]
+    current_distant = [positions[distance_sorting[-2]], positions[distance_sorting[-1]]]
+    first_check = current_closest + current_distant
+
+    # Now out of these let's check the distance from each to the closest enemy
+    min_enemy_dists = [
+        min(
+            np.linalg.norm(
+                np.array(pos)
+                - np.array(
+                    (
+                        state[0][i].item() + state[0][2].item(),
+                        state[0][i + 1].item() + state[0][3].item(),
+                    )
+                )
+            )
+            for i in range(22, 28, 2)
+        )
+        for pos in first_check
+    ]
+
+    # Now if the maximum among those distances is high enough, let's move there
+    if np.max(min_enemy_dists) > 0.5:
+        target = first_check[np.argmax(min_enemy_dists)]
+    # Otherwise, re-check using every position, move to the furthest away from the enemies
+    else:
+        target = positions[
+            np.argmax(
+                [
+                    min(
+                        np.linalg.norm(
+                            np.array(pos)
+                            - np.array(
+                                (
+                                    state[0][i].item() + state[0][2].item(),
+                                    state[0][i + 1].item() + state[0][3].item(),
+                                )
+                            )
+                        )
+                        for i in range(22, 28, 2)
+                    )
+                    for pos in positions
+                ]
+            )
+        ]
+
+    # Now that the target position is acquired, let's just move there
+    # Ddistance for the player to target
+    dist_x = target[0] - state[0][2].item()
+    dist_y = target[1] - state[0][3].item()
+
+    # Now we move towards that target
+    action = ACTIONS["no_action"]
+    if abs(dist_x) > abs(dist_y):
+        if dist_x > 0:
+            action = ACTIONS["move_right"]
+        elif dist_x < 0:
+            action = ACTIONS["move_left"]
+    elif abs(dist_x) < abs(dist_y):
+        if dist_y > 0:
+            action = ACTIONS["move_up"]
+        elif dist_y < 0:
+            action = ACTIONS["move_down"]
+
+    return action
 
 
 def dqn_player(state):

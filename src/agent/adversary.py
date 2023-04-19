@@ -82,8 +82,8 @@ def train(ctx, visualize, desc):
 
     import torch
     import torch.optim as optim
-
     import wandb
+
     from src.agent.constants import (
         AGENTS,
         EPS_DECAY,
