@@ -41,7 +41,7 @@ def evasive_player(state):
     - Enemies have to learn to surround the player and slowly move together towards it
     """
 
-    # Getting sum of relative positions
+    # Getting sum of inverse relative positions
     x_diffs = 0
     y_diffs = 0
     # for landmarks
@@ -54,6 +54,11 @@ def evasive_player(state):
         x_diffs += 1 / state[0][i].item()
     for i in range(23, 29, 2):
         y_diffs += 1 / state[0][i].item()
+    # for walls
+    x_diffs += 5 / (1.01 - state[0][2].item())
+    x_diffs += 5 / (-1.01 - state[0][2].item())
+    y_diffs += 5 / (1.01 - state[0][3].item())
+    y_diffs += 5 / (-1.01 - state[0][3].item())
 
     # Checking larger difference and moving in opposite direction
     action = ACTIONS["no_action"]
@@ -153,6 +158,8 @@ def hiding_player(state):
         self_pos[0] + final_dir[0] * 2.83 * 0.3,
         self_pos[1] + final_dir[1] * np.pi * 0.3,
     )
+    if self_pos[0] > 0.98 and random.random() < self_pos[0] * .5:
+        target_polar = (0, target_polar[1])
     target_cart = polar_to_cart(target_polar[0], target_polar[1])
 
     # And cartesian distance for the player to target
