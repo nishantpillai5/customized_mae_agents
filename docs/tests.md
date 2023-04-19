@@ -62,3 +62,8 @@ Long-term
         avg -0.68 reached in 3 eps
         std 0.13 reached in 5 eps
         final result: avg -0.36, std 0.09
+    Multiple: 48 tests of 100 eps x 1000 steps (cycling evasive, hiding, shifty by episode)
+        Oscillatory results between avg -0.5 and -0.66
+        Third episode (on shifty) works well already after the first two episodes on evasive and hiding
+        Shifty is always the better performing one
+        At the end it oscillates between avg -0.44 and -0.5, std doesn't stabilize
