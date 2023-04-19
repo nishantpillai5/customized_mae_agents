@@ -31,3 +31,22 @@ device = torch.device(DEVICE)
 TEST_RAY_BATCHES = 3
 TEST_EPS_NUM = 1
 TEST_MAX_CYCLES = 5000
+
+cfg = {
+    "batch_size" : 128,
+    "gamma" : 0.99,
+    "eps_start":  0.9,
+    "eps_end" :0.05,
+    "eps_decay" : 1000,
+    "tau" : 0.005,
+    "learning_rate" : 1e-4,
+    "replay_mem" : 256 , # 00)  # rob: reduced to reduce RAM usage
+
+    "ray_batches" : 2,
+    "eps_num" : 150,
+    "max_cycles" : 400,
+
+    "test_ray_batches" : 3,
+    "test_eps_num" : 1,
+    "test_max_cycles" : 5000,
+}
