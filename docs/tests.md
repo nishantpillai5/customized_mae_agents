@@ -50,3 +50,15 @@ OR
 with [genetic algorithms](https://optuna.readthedocs.io/en/stable/index.html)
 
 [More Examples](https://docs.ray.io/en/latest/tune/examples/hpo-frameworks.html)
+
+
+
+# Results
+
+Before tuning
+
+Long-term
+    Evasive: 48 tests of 100 eps x 1000 steps 
+        avg -0.68 reached in 3 eps
+        std 0.13 reached in 5 eps
+        final result: avg -0.36, std 0.09

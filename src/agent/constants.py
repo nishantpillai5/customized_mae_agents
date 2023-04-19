@@ -24,9 +24,9 @@ cfg = {
     "tau": 0.005,
     "learning_rate": 1e-4,
     "replay_mem": 256,  # 00)  # rob: reduced to reduce RAM usage
-    "ray_batches": 2,
-    "eps_num": 150,
-    "max_cycles": 400,
+    "ray_batches": 48,
+    "eps_num": 100,
+    "max_cycles": 1000,
 }
 
 test_cfg = {
