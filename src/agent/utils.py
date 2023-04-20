@@ -133,7 +133,7 @@ def select_action(
     steps_done=0,
     random_action=None,
     player_strat=None,
-    cfg=cfg
+    cfg=cfg,
 ):
     override = random_action if player_strat is None else None
     player_action = get_player_action(state, strategy=player_strat, override=override)

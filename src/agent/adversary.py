@@ -201,7 +201,9 @@ def train(ctx, visualize, desc):
                             observation,
                             previous_state[1],
                         )
-                        optimize_model(optimizer, memory, policy_net, target_net, cfg=cfg)
+                        optimize_model(
+                            optimizer, memory, policy_net, target_net, cfg=cfg
+                        )
                         target_net_state_dict = target_net.state_dict()
                         policy_net_state_dict = policy_net.state_dict()
                         for key in policy_net_state_dict:
@@ -257,5 +259,151 @@ def train(ctx, visualize, desc):
             ray.cancel(i)
 
 
+@click.command()
+@click.pass_context
+def tune(ctx):
+    import random
+
+    import ray
+    import torch
+    import torch.optim as optim
+    from ray import tune
+
+    from src.agent.constants import AGENTS, device, search_space_cfg
+    from src.agent.utils import (
+        DQN,
+        ReplayMemory,
+        StateCache,
+        optimize_model,
+        select_action,
+    )
+
+    PLAYER_STRAT = "multiple"
+
+    def trainable(config, name=None):
+        def env_creator(render_mode="rgb_array"):
+            from src.world import world_utils
+
+            env = world_utils.env(
+                render_mode=render_mode, max_cycles=config["max_cycles"]
+            )
+            return env
+
+        if not name:
+            name = int(random.random() * 10000)
+
+        # FIXME: Get number of actions from gym action space
+        n_actions = 5
+
+        env = env_creator(render_mode="human" if visualize else "rgb_array")
+        env.reset()
+        env.render()
+
+        state, _, _, _, _ = env.last()
+        # Get the number of state observations
+        n_observations = len(state)
+
+        policy_net = DQN(n_observations, n_actions).to(device)
+        target_net = DQN(n_observations, n_actions).to(device)
+        target_net.load_state_dict(policy_net.state_dict())
+
+        optimizer = optim.AdamW(
+            policy_net.parameters(), lr=config["learning_rate"], amsgrad=True
+        )
+        memory = ReplayMemory(config["replay_mem"])
+        steps_done = 0
+
+        episode_durations = []
+        episode_rewards = []
+
+        state_cache = StateCache()
+
+        for i_episode in range(config["eps_num"]):
+            if PLAYER_STRAT != "multiple":
+                player_agent_strat = PLAYER_STRAT
+            else:
+                player_agent_strat = ["evasive", "hiding", "shifty"][i_episode % 3]
+            env.reset()
+            env.render()
+            state, reward, _, _, _ = env.last()
+
+            for agent in AGENTS:
+                state_cache.save_state(agent, state, reward)
+
+            rewards = []
+            actions = {agent: torch.tensor([[0]], device=device) for agent in AGENTS}
+            t = 0
+            for agent in env.agent_iter():
+                t += 1
+                # agent = AGENTS[t % 4]
+                previous_state = state_cache.get_state(agent)
+                observation, reward, terminated, truncated, _ = env.last()
+                rewards.append(reward)
+
+                observation, reward = state_cache.deal_state(agent, observation, reward)
+                old_action = actions[agent]
+                done = terminated or truncated
+                if done:
+                    env.step(None)
+                else:
+                    action, steps_done = select_action(
+                        observation,
+                        policy_net,
+                        good_agent=("agent" in agent),
+                        steps_done=steps_done,
+                        random_action=env.action_space("agent_0").sample(),
+                        player_strat=player_agent_strat,
+                    )
+                    actions[agent] = action
+                    env.step(action.item())
+
+                    if "agent" not in agent:  # if adversary
+                        memory.push(
+                            previous_state[0],
+                            old_action,
+                            observation,
+                            previous_state[1],
+                        )
+                        optimize_model(
+                            optimizer, memory, policy_net, target_net, cfg=config
+                        )
+                        target_net_state_dict = target_net.state_dict()
+                        policy_net_state_dict = policy_net.state_dict()
+                        for key in policy_net_state_dict:
+                            target_net_state_dict[key] = policy_net_state_dict[
+                                key
+                            ] * config["tau"] + target_net_state_dict[key] * (
+                                1 - config["tau"]
+                            )
+                        target_net.load_state_dict(target_net_state_dict)
+                env.render()
+
+                if done:  # FIXME: is there a reason for two checks lol?
+                    episode_durations.append(t + 1)
+                    episode_rewards += rewards[-4:]
+                    rewards = np.array(rewards)
+                    log_data = {
+                        "episode_rewards": episode_rewards[-4:],
+                        "avg_ep_reward": np.sum(rewards) / (config["max_cycles"] * 3),
+                        "num_collisions": (rewards > 0).sum() // (3),
+                        "distance_penalty": (
+                            np.sum(rewards[(rewards < 0)]) / (config["max_cycles"] * 3)
+                        ),
+                    }
+                    tune.report(reward=log_data["avg_ep_reward"])
+                    break
+
+    config = {x: tune.grid_search(y) for x, y in search_space_cfg.items()}
+
+    tune.run(
+        trainable,
+        config=config,
+        num_samples=1,
+        # scheduler="fifo", # FIXME: choose
+        # search_alg="optuna",
+    )
+
+
 adversary.add_command(train)
+adversary.add_command(tune)
 adversary.add_command(eval)
