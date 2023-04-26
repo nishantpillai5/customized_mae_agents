@@ -18,10 +18,23 @@ def results():
     default="static",
     help="Strategy",
 )
+@click.option(
+    "--eps-num",
+    "-e",
+    default=1,
+    help="Episodes to record",
+)
+@click.option(
+    "--max-cycles",
+    "-m",
+    default=1000,
+    help="Max cycles",
+)
 @click.pass_context
-def record(ctx, adversary_model, strategy):
+def record(ctx, adversary_model, strategy, eps_num, max_cycles):
     import logging
     import logging.config
+    import os
     import random
     from pprint import pformat
 
@@ -29,14 +42,14 @@ def record(ctx, adversary_model, strategy):
     import torch
     from gymnasium.utils.save_video import save_video
 
-    from src.agent.constants import AGENTS, cfg, device
+    from src.agent.constants import AGENTS, device
     from src.agent.utils import DQN, StateCache, select_action
     from src.utils import get_logging_conf
 
     def env_creator(render_mode="rgb_array"):
         from src.world import world_utils
 
-        env = world_utils.env(render_mode=render_mode, max_cycles=cfg["max_cycles"])
+        env = world_utils.env(render_mode=render_mode, max_cycles=max_cycles)
         return env
 
     worker_config = get_logging_conf(f"record")
@@ -66,7 +79,7 @@ def record(ctx, adversary_model, strategy):
 
     state_cache = StateCache()
 
-    for i_episode in range(cfg["eps_num"]):
+    for i_episode in range(eps_num):
         env.reset()
         env.render()
         state, reward, _, _, _ = env.last()
@@ -106,16 +119,18 @@ def record(ctx, adversary_model, strategy):
             frames.append(env.render())
 
             if done:  # FIXME: is there a reason for two checks lol?
+                episode_durations.append(t + 1)
+                episode_rewards += rewards[-4:]
+                logger.info(f"Ep reward: {episode_rewards[-4:]}")
                 save_video(
                     frames,
                     "logs/videos",
                     fps=env.metadata["render_fps"],
-                    step_starting_index=0,
                     episode_index=i_episode,
+                    name_prefix=os.path.basename(adversary_model)
+                    + f"_{strategy}_"
+                    + str(np.around(np.sum(episode_rewards[-4:]), decimals=3)),
                 )
-                episode_durations.append(t + 1)
-                episode_rewards += rewards[-4:]
-                logger.info(f"Ep reward: {episode_rewards[-4:]}")
                 break
 
     # TODO: Aggregate and Log Rewards
