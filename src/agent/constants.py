@@ -1,4 +1,4 @@
-DEVICE = "cpu"
+DEVICE = "cuda"
 # device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 AGENTS = ["adversary_0", "adversary_1", "adversary_2", "agent_0"]
@@ -27,8 +27,8 @@ cfg = {
     "ray_batches": 48,
     "eps_num": 100,
     "max_cycles": 1000,
-    "num_layers": 4, 
-    "num_neuron": 64,
+    "num_layers": 4,
+    "num_neurons": 64,
 }
 
 test_cfg = {
@@ -37,6 +37,11 @@ test_cfg = {
     "eps_num": 1,
     "max_cycles": 5000,
 }
+
+# hpo_cfg = {  # testing values
+#     "eps_num": 1,
+#     "max_cycles": 100,
+# }
 
 hpo_cfg = {  # testing values
     "eps_num": 6,
@@ -47,14 +52,16 @@ import optuna
 
 
 def define_search_space(trial: optuna.Trial):
-    trial.suggest_float("gamma", 0.9, 0.99)
-    trial.suggest_float("eps_start", 0.8, 0.9)
-    trial.suggest_float("eps_end", 0.02, 0.05)
-    trial.suggest_float("eps_decay", 200, 2000)
-    trial.suggest_float("tau", 0.005, 0.01)
+    trial.suggest_float("gamma", 0.8, 0.99)
+    trial.suggest_float("eps_start", 0.8, 0.9) 
+    trial.suggest_float("eps_end", 0.02, 0.05) 
+    trial.suggest_int("eps_decay", 200, 2000, step=50)
+    trial.suggest_float("tau", 0.005, 0.01, log=True)
     trial.suggest_float("learning_rate", 1e-4, 1e-2, log=True)
     trial.suggest_int("batch_size", 256, 512, step=256)
     trial.suggest_int("replay_mem", 256, 512, step=256)
+    trial.suggest_int("num_layers", 3, 6, step=1)
+    trial.suggest_int("num_neurons", 16, 64, step=16)
 
 
 search_space_cfg_old = {

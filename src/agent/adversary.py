@@ -367,7 +367,7 @@ def tune(ctx, num_samples):
                     env.step(None)
                 else:
                     action, steps_done = select_action(
-                        cfg,
+                        config,
                         observation,
                         policy_net,
                         good_agent=("agent" in agent),
@@ -434,9 +434,15 @@ def tune(ctx, num_samples):
 
     # config = {x: tune.uniform(y[0], y[1]) for x, y in search_space_cfg.items()}
 
+    from optuna.samplers import NSGAIISampler
     from ray.tune.search.optuna import OptunaSearch
 
-    algo = OptunaSearch(define_search_space, metric="avg_ep_avg_reward", mode="max")
+    algo = OptunaSearch(
+        define_search_space,
+        metric="avg_ep_avg_reward",
+        mode="max",
+        sampler=NSGAIISampler(),
+    )
 
     # space = {x: (y[0], y[1]) for x, y in search_space_cfg.items()}
 
@@ -450,7 +456,11 @@ def tune(ctx, num_samples):
     # )
 
     tuner = tune.Tuner(
-        trainable,
+        tune.with_resources(
+            tune.with_parameters(trainable),
+        resources={"gpu": 1}
+        ),
+        # trainable,
         # param_space=config,
         tune_config=tune.TuneConfig(
             metric="avg_ep_avg_reward",
@@ -473,7 +483,6 @@ def tune(ctx, num_samples):
     results.get_dataframe().to_csv(
         f"logs/{os.path.basename(filename)}.csv", index=False
     )
-
 
 adversary.add_command(train)
 adversary.add_command(tune)

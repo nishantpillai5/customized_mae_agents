@@ -53,9 +53,9 @@ class DQN(nn.Module):
         layers = cfg["num_layers"] * [cfg["num_neurons"]]
         layers = [n_observations, *layers, n_actions]
 
-        self.layers = [
-            nn.Linear(layers[i], layers[i + 1]) for i in range(len(layers) - 1)
-        ]
+        self.layers = nn.ModuleList(
+            [nn.Linear(layers[i], layers[i + 1]) for i in range(len(layers) - 1)]
+        )
 
         # self.layer1 = nn.Linear(n_observations, 64)
         # self.layer2 = nn.Linear(64, 32)
