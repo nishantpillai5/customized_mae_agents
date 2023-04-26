@@ -347,8 +347,8 @@ def test(ctx, adversary_model, strategy, visualize):
         # Get the number of state observations
         n_observations = len(state)
 
-        policy_net = DQN(n_observations, n_actions).to(device)
-        # target_net = DQN(n_observations, n_actions).to(device)
+        policy_net = DQN(n_observations, n_actions, cfg).to(device)
+        # target_net = DQN(n_observations, n_actions, cfg).to(device)
         policy_net.load_state_dict(torch.load(adversary_model))
         # target_net.load_state_dict(torch.load(PATH))
         policy_net.eval()
@@ -385,6 +385,7 @@ def test(ctx, adversary_model, strategy, visualize):
                     env.step(None)
                 else:
                     action, steps_done = select_action(
+                        cfg,
                         observation,
                         policy_net,
                         good_agent=("agent" in agent),

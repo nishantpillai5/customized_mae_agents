@@ -27,6 +27,8 @@ cfg = {
     "ray_batches": 48,
     "eps_num": 100,
     "max_cycles": 1000,
+    "num_layers": 4, 
+    "num_neuron": 64,
 }
 
 test_cfg = {
@@ -39,18 +41,6 @@ test_cfg = {
 hpo_cfg = {  # testing values
     "eps_num": 6,
     "max_cycles": 1000,
-    "batch_size": 256,
-    "replay_mem": 256,
-}
-
-
-search_space_cfg = {
-    "gamma": [0.9, 0.99],
-    "eps_start": [0.8, 0.9],
-    "eps_end": [0.02, 0.05],
-    "eps_decay": [200, 2000],
-    "tau": [0.005, 0.01],
-    "learning_rate": [1e-4, 1e-3],
 }
 
 import optuna
@@ -63,6 +53,8 @@ def define_search_space(trial: optuna.Trial):
     trial.suggest_float("eps_decay", 200, 2000)
     trial.suggest_float("tau", 0.005, 0.01)
     trial.suggest_float("learning_rate", 1e-4, 1e-2, log=True)
+    trial.suggest_int("batch_size", 256, 512, step=256)
+    trial.suggest_int("replay_mem", 256, 512, step=256)
 
 
 search_space_cfg_old = {

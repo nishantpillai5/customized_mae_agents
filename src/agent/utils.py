@@ -7,7 +7,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 
-from src.agent.constants import cfg, device
+from src.agent.constants import device
 from src.agent.player import get_player_action
 
 Transition = namedtuple("Transition", ("state", "action", "next_state", "reward"))
@@ -47,23 +47,36 @@ class ReplayMemory(object):
 
 
 class DQN(nn.Module):
-    def __init__(self, n_observations, n_actions):
+    def __init__(self, n_observations, n_actions, cfg):
         super(DQN, self).__init__()
-        self.layer1 = nn.Linear(n_observations, 64)
-        self.layer2 = nn.Linear(64, 32)
-        self.layer3 = nn.Linear(32, 20)
-        self.layer4 = nn.Linear(20, n_actions)
+
+        layers = cfg["num_layers"] * [cfg["num_neurons"]]
+        layers = [n_observations, *layers, n_actions]
+
+        self.layers = [
+            nn.Linear(layers[i], layers[i + 1]) for i in range(len(layers) - 1)
+        ]
+
+        # self.layer1 = nn.Linear(n_observations, 64)
+        # self.layer2 = nn.Linear(64, 32)
+        # self.layer3 = nn.Linear(32, 20)
+        # self.layer4 = nn.Linear(20, n_actions)
 
     # Called with either one element to determine next action, or a batch
     # during optimization. Returns tensor([[left0exp,right0exp]...]).
     def forward(self, x):
-        x = F.relu(self.layer1(x))
-        x = F.relu(self.layer2(x))
-        x = F.relu(self.layer3(x))
-        return self.layer4(x)
+        # x = F.relu(self.layer1(x))
+        # x = F.relu(self.layer2(x))
+        # x = F.relu(self.layer3(x))
+        # return self.layer4(x)
+
+        for layer in self.layers:
+            x = layer(x)
+
+        return x
 
 
-def optimize_model(optimizer, memory, policy_net, target_net, cfg=cfg):
+def optimize_model(optimizer, memory, policy_net, target_net, cfg):
     if len(memory) < cfg["batch_size"]:
         return
     transitions = memory.sample(cfg["batch_size"])
@@ -127,13 +140,13 @@ def print_rewards(name, episode_rewards):
 
 
 def select_action(
+    cfg,
     state,
     policy_net,
     good_agent=False,
     steps_done=0,
     random_action=None,
     player_strat=None,
-    cfg=cfg,
 ):
     override = random_action if player_strat is None else None
     player_action = get_player_action(state, strategy=player_strat, override=override)

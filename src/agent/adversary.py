@@ -45,7 +45,7 @@ def eval(ctx, filepaths, visualize):
     state, _, _, _, _ = env.last()
     n_observations = len(state)
 
-    policy_net = DQN(n_observations, n_actions).to(device)
+    policy_net = DQN(n_observations, n_actions, cfg).to(device)
 
     # https://pytorch.org/tutorials/beginner/saving_loading_models.html
 
@@ -140,8 +140,8 @@ def train(ctx, visualize, desc):
         # Get the number of state observations
         n_observations = len(state)
 
-        policy_net = DQN(n_observations, n_actions).to(device)
-        target_net = DQN(n_observations, n_actions).to(device)
+        policy_net = DQN(n_observations, n_actions, cfg).to(device)
+        target_net = DQN(n_observations, n_actions, cfg).to(device)
         target_net.load_state_dict(policy_net.state_dict())
 
         optimizer = optim.AdamW(
@@ -184,6 +184,7 @@ def train(ctx, visualize, desc):
                     env.step(None)
                 else:
                     action, steps_done = select_action(
+                        cfg,
                         observation,
                         policy_net,
                         good_agent=("agent" in agent),
@@ -321,14 +322,14 @@ def tune(ctx, num_samples):
         # Get the number of state observations
         n_observations = len(state)
 
-        policy_net = DQN(n_observations, n_actions).to(device)
-        target_net = DQN(n_observations, n_actions).to(device)
+        policy_net = DQN(n_observations, n_actions, config).to(device)
+        target_net = DQN(n_observations, n_actions, config).to(device)
         target_net.load_state_dict(policy_net.state_dict())
 
         optimizer = optim.AdamW(
             policy_net.parameters(), lr=config["learning_rate"], amsgrad=True
         )
-        memory = ReplayMemory(static_config["replay_mem"])
+        memory = ReplayMemory(config["replay_mem"])
         steps_done = 0
 
         episode_durations = []
@@ -366,6 +367,7 @@ def tune(ctx, num_samples):
                     env.step(None)
                 else:
                     action, steps_done = select_action(
+                        cfg,
                         observation,
                         policy_net,
                         good_agent=("agent" in agent),
@@ -389,7 +391,7 @@ def tune(ctx, num_samples):
                             policy_net,
                             target_net,
                             cfg={
-                                "batch_size": static_config["batch_size"],
+                                "batch_size": config["batch_size"],
                                 "gamma": config["gamma"],
                             },
                         )
