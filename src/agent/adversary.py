@@ -456,8 +456,10 @@ def tune(ctx, num_samples):
     # )
 
     tuner = tune.Tuner(
-        tune.with_resources(tune.with_parameters(trainable), resources={"gpu": 1}),
-        # trainable,
+        # tune.with_resources(
+        #     tune.with_parameters(trainable), resources={"gpu": 1}
+        # ),
+        trainable,
         # param_space=config,
         tune_config=tune.TuneConfig(
             metric="avg_ep_avg_reward",

@@ -1,4 +1,4 @@
-DEVICE = "cuda"
+DEVICE = "cpu"
 # device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 AGENTS = ["adversary_0", "adversary_1", "adversary_2", "agent_0"]
