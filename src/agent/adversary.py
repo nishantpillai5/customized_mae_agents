@@ -1,7 +1,7 @@
 import logging
 import logging.config
 from pathlib import Path
-from pprint import pformat
+from pprint import pformat, pprint
 
 import click
 import numpy as np
@@ -260,16 +260,24 @@ def train(ctx, visualize, desc):
 
 
 @click.command()
+@click.option(
+    "--num-samples",
+    "-s",
+    default=1000,
+    help="No of samples",
+)
 @click.pass_context
-def tune(ctx):
+def tune(ctx, num_samples):
+    import os
     import random
 
     import ray
     import torch
     import torch.optim as optim
     from ray import tune
+    from ray.air import session
 
-    from src.agent.constants import AGENTS, device, search_space_cfg
+    from src.agent.constants import AGENTS, define_search_space, device, hpo_cfg
     from src.agent.utils import (
         DQN,
         ReplayMemory,
@@ -278,14 +286,24 @@ def tune(ctx):
         select_action,
     )
 
+    static_config = hpo_cfg
+
     PLAYER_STRAT = "multiple"
 
-    def trainable(config, name=None):
+    worker_config = get_logging_conf(f"ad_tune")
+    logging.config.dictConfig(worker_config)
+    logger = logging.getLogger("both")
+    filename = worker_config["handlers"]["r_file"]["filename"]
+
+    def trainable(config):
+        name = None
+        visualize = False
+
         def env_creator(render_mode="rgb_array"):
             from src.world import world_utils
 
             env = world_utils.env(
-                render_mode=render_mode, max_cycles=config["max_cycles"]
+                render_mode=render_mode, max_cycles=static_config["max_cycles"]
             )
             return env
 
@@ -310,15 +328,16 @@ def tune(ctx):
         optimizer = optim.AdamW(
             policy_net.parameters(), lr=config["learning_rate"], amsgrad=True
         )
-        memory = ReplayMemory(config["replay_mem"])
+        memory = ReplayMemory(static_config["replay_mem"])
         steps_done = 0
 
         episode_durations = []
         episode_rewards = []
 
         state_cache = StateCache()
+        ep_avg_rewards = []
 
-        for i_episode in range(config["eps_num"]):
+        for i_episode in range(static_config["eps_num"]):
             if PLAYER_STRAT != "multiple":
                 player_agent_strat = PLAYER_STRAT
             else:
@@ -365,7 +384,14 @@ def tune(ctx):
                             previous_state[1],
                         )
                         optimize_model(
-                            optimizer, memory, policy_net, target_net, cfg=config
+                            optimizer,
+                            memory,
+                            policy_net,
+                            target_net,
+                            cfg={
+                                "batch_size": static_config["batch_size"],
+                                "gamma": config["gamma"],
+                            },
                         )
                         target_net_state_dict = target_net.state_dict()
                         policy_net_state_dict = policy_net.state_dict()
@@ -382,25 +408,68 @@ def tune(ctx):
                     episode_durations.append(t + 1)
                     episode_rewards += rewards[-4:]
                     rewards = np.array(rewards)
+                    ep_avg_rewards.append(
+                        np.sum(rewards) / (static_config["max_cycles"] * 3)
+                    )
                     log_data = {
                         "episode_rewards": episode_rewards[-4:],
-                        "avg_ep_reward": np.sum(rewards) / (config["max_cycles"] * 3),
+                        "avg_ep_reward": np.sum(rewards)
+                        / (static_config["max_cycles"] * 3),
                         "num_collisions": (rewards > 0).sum() // (3),
                         "distance_penalty": (
-                            np.sum(rewards[(rewards < 0)]) / (config["max_cycles"] * 3)
+                            np.sum(rewards[(rewards < 0)])
+                            / (static_config["max_cycles"] * 3)
                         ),
                     }
-                    tune.report(reward=log_data["avg_ep_reward"])
                     break
+                    # Intermediate scoring
+                    # session.report({"avg_ep_avg_reward": np.sum(ep_avg_rewards) / len(ep_avg_rewards)})
+        # Final scoring
+        # return {"avg_ep_avg_reward": np.sum(ep_avg_rewards) / len(ep_avg_rewards)}
+        session.report(
+            {"avg_ep_avg_reward": np.sum(ep_avg_rewards) / len(ep_avg_rewards)}
+        )
 
-    config = {x: tune.grid_search(y) for x, y in search_space_cfg.items()}
+    # config = {x: tune.uniform(y[0], y[1]) for x, y in search_space_cfg.items()}
 
-    tune.run(
+    from ray.tune.search.optuna import OptunaSearch
+
+    algo = OptunaSearch(define_search_space, metric="avg_ep_avg_reward", mode="max")
+
+    # space = {x: (y[0], y[1]) for x, y in search_space_cfg.items()}
+
+    # from ray.tune.search.bayesopt import BayesOptSearch
+
+    # algo = BayesOptSearch(
+    #     space,
+    #     metric="avg_ep_avg_reward",
+    #     mode="max",
+    #     # utility_kwargs={"kind": "ucb", "kappa": 2.5, "xi": 0.0},
+    # )
+
+    tuner = tune.Tuner(
         trainable,
-        config=config,
-        num_samples=1,
-        # scheduler="fifo", # FIXME: choose
-        # search_alg="optuna",
+        # param_space=config,
+        tune_config=tune.TuneConfig(
+            metric="avg_ep_avg_reward",
+            mode="max",
+            search_alg=algo,
+            num_samples=num_samples,
+        ),
+        # run_config=ray.air.RunConfig(stop={"training_iteration": 20}),
+    )
+    results = tuner.fit()
+    best_result = results.get_best_result()  # Get best result object
+
+    logger.info("Log: " + str(best_result.log_dir))
+    logger.info(
+        "Best config: \n" + pformat(best_result.config)
+    )  # Get best trial's hyperparameters
+    logger.info(
+        "Best metrics: \n" + pformat(best_result.metrics)
+    )  # Get best trial's last results
+    results.get_dataframe().to_csv(
+        f"logs/{os.path.basename(filename)}.csv", index=False
     )
 
 

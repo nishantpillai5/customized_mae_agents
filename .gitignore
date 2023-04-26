@@ -92,5 +92,6 @@ target/
 wandb/
 
 # Logs
+logs/*.csv
 logs/*.pth
 logs/videos/*
