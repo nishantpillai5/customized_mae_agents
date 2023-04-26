@@ -53,8 +53,8 @@ import optuna
 
 def define_search_space(trial: optuna.Trial):
     trial.suggest_float("gamma", 0.8, 0.99)
-    trial.suggest_float("eps_start", 0.8, 0.9) 
-    trial.suggest_float("eps_end", 0.02, 0.05) 
+    trial.suggest_float("eps_start", 0.8, 0.9)
+    trial.suggest_float("eps_end", 0.02, 0.05)
     trial.suggest_int("eps_decay", 200, 2000, step=50)
     trial.suggest_float("tau", 0.005, 0.01, log=True)
     trial.suggest_float("learning_rate", 1e-4, 1e-2, log=True)

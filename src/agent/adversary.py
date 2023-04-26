@@ -456,10 +456,7 @@ def tune(ctx, num_samples):
     # )
 
     tuner = tune.Tuner(
-        tune.with_resources(
-            tune.with_parameters(trainable),
-        resources={"gpu": 1}
-        ),
+        tune.with_resources(tune.with_parameters(trainable), resources={"gpu": 1}),
         # trainable,
         # param_space=config,
         tune_config=tune.TuneConfig(
@@ -483,6 +480,7 @@ def tune(ctx, num_samples):
     results.get_dataframe().to_csv(
         f"logs/{os.path.basename(filename)}.csv", index=False
     )
+
 
 adversary.add_command(train)
 adversary.add_command(tune)
