@@ -125,8 +125,8 @@ def record(ctx, adversary_model, strategy, eps_num, max_cycles):
                 save_video(
                     frames,
                     "logs/videos",
-                    fps=env.metadata["render_fps"],
-                    episode_index=i_episode,
+                    # fps=env.metadata["render_fps"]*4, # Sped up
+                    fps=60,
                     name_prefix=os.path.basename(adversary_model)
                     + f"_{strategy}_"
                     + str(np.around(np.sum(episode_rewards[-4:]), decimals=3)),
