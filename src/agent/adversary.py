@@ -93,7 +93,7 @@ def train(ctx, visualize, desc):
         select_action,
     )
 
-    print("Running with", cfg["ray_batches"], "baches")
+    print("Running with", cfg["ray_batches"], "batches")
     print("Running for", cfg["eps_num"], "episodes")
     print("An episode is", cfg["max_cycles"], "cycles")
 

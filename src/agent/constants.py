@@ -15,7 +15,24 @@ import torch
 
 device = torch.device(DEVICE)
 
+# After HPO ad_tune_Apr26_2305_40624569
 cfg = {
+    "batch_size": 512,
+    "eps_decay": 400,
+    "eps_end": 0.026976530765314137,
+    "eps_start": 0.8987838521753412,
+    "gamma": 0.8950865749131748,
+    "learning_rate": 0.007998321913735864,
+    "num_layers": 4,
+    "num_neurons": 32,
+    "replay_mem": 256,
+    "tau": 0.009448523131629041,
+    "ray_batches": 3,
+    "eps_num": 100,
+    "max_cycles": 6000,
+}
+
+old_cfg = {
     "batch_size": 128,
     "gamma": 0.99,
     "eps_start": 0.9,
