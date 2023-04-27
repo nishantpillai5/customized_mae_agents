@@ -93,9 +93,9 @@ def train(ctx, visualize, desc):
         select_action,
     )
 
-    print("Running with", cfg["ray_batches"], "batches")
-    print("Running for", cfg["eps_num"], "episodes")
-    print("An episode is", cfg["max_cycles"], "cycles")
+    print(f"Running for {','.join(cfg['strats'])} strats")
+    print(f"Running for {cfg['eps_num']} episodes")
+    print(f"An episode is {cfg['max_cycles']} cycles")
 
     def env_creator(render_mode="rgb_array"):
         from src.world import world_utils
@@ -105,14 +105,12 @@ def train(ctx, visualize, desc):
 
     import ray
 
-    PLAYER_STRAT = "multiple"
-
     @ray.remote
-    def ray_train(name=None):
+    def ray_train(player_strat, name=None):
         if not name:
             name = int(random.random() * 10000)
 
-        worker_config = get_logging_conf(f"ad_train_{name}")
+        worker_config = get_logging_conf(f"ad_train_{player_strat}")
         logging.config.dictConfig(worker_config)
         logger = logging.getLogger("both")
 
@@ -124,7 +122,7 @@ def train(ctx, visualize, desc):
             config={
                 "description": desc,
                 "filename": filename,
-                "strategy": PLAYER_STRAT,
+                "strategy": player_strat,
                 # Hyperparameters
                 **cfg,
             },
@@ -156,8 +154,8 @@ def train(ctx, visualize, desc):
         state_cache = StateCache()
 
         for i_episode in range(cfg["eps_num"]):
-            if PLAYER_STRAT != "multiple":
-                player_agent_strat = PLAYER_STRAT
+            if player_strat != "multiple":
+                player_agent_strat = player_strat
             else:
                 player_agent_strat = ["evasive", "hiding", "shifty"][i_episode % 3]
             env.reset()
@@ -250,8 +248,8 @@ def train(ctx, visualize, desc):
 
     task_handles = []
     try:
-        for i in range(1, cfg["ray_batches"] + 1):
-            task_handles.append(ray_train.remote(name=i))
+        for i in range(len(cfg["strats"])):
+            task_handles.append(ray_train.remote(cfg["strats"][i], name=i))
 
         output = ray.get(task_handles)
         print(output)

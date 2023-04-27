@@ -27,6 +27,8 @@ cfg = {
     "num_neurons": 32,
     "replay_mem": 256,
     "tau": 0.009448523131629041,
+    # Non-HPO
+    "strats": ["evasive", "hiding", "shifty"],
     "ray_batches": 3,
     "eps_num": 100,
     "max_cycles": 6000,
