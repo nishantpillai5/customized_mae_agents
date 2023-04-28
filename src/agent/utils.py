@@ -70,10 +70,10 @@ class DQN(nn.Module):
         # x = F.relu(self.layer3(x))
         # return self.layer4(x)
 
-        for layer in self.layers:
+        for layer in self.layers[:-1]:
             x = F.relu(layer(x))
 
-        return x
+        return self.layers[-1](x)
 
 
 def optimize_model(optimizer, memory, policy_net, target_net, cfg):

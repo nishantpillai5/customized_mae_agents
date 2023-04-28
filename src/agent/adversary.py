@@ -84,6 +84,7 @@ def train(ctx, visualize, desc):
     import torch.optim as optim
 
     import wandb
+    from src.results.main import record
     from src.agent.constants import AGENTS, cfg, device
     from src.agent.utils import (
         DQN,
@@ -236,14 +237,17 @@ def train(ctx, visualize, desc):
 
         logger.info("Complete Ep reward: \n" + pformat(np.asarray(episode_rewards)))
         # Save model
-        torch.save(policy_net.state_dict(), filename + "_policy.pth")
+        model_filename = filename + "_policy.pth"
+        torch.save(policy_net.state_dict(), model_filename)
         torch.save(target_net.state_dict(), filename + "_target.pth")
 
         artifact = wandb.Artifact(
             name=filename[filename.index("/") + 1 :], type="model"
         )
-        artifact.add_file(local_path=filename + "_policy.pth")
+        artifact.add_file(local_path=model_filename)
         wandb_run.log_artifact(artifact)
+
+        ctx.invoke(record, [model_filename], player_agent_strat, 1, cfg["max_cycles"])
 
         return torch.tensor(episode_rewards, dtype=torch.float)
 

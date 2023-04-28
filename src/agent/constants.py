@@ -16,7 +16,7 @@ import torch
 device = torch.device(DEVICE)
 
 # After HPO ad_tune_Apr27_1435_06134012.log
-cfg = {
+wait_cfg = {
     "batch_size": 512,
     "eps_decay": 200,
     "eps_end": 0.039167333085595155,
@@ -36,7 +36,7 @@ cfg = {
     "max_cycles": 1000,
 }
 
-old_cfg = {
+cfg = {
     "batch_size": 128,
     "gamma": 0.99,
     "eps_start": 0.9,
@@ -46,7 +46,7 @@ old_cfg = {
     "learning_rate": 1e-4,
     "replay_mem": 256,  # 00)  # rob: reduced to reduce RAM usage
     "ray_batches": 3,
-    "eps_num": 30,
+    "eps_num": 12,
     "max_cycles": 1000,
     "num_layers": 4,
     "num_neurons": 64,
@@ -77,13 +77,13 @@ def define_search_space(trial: optuna.Trial):
     trial.suggest_float("gamma", 0.8, 0.99)
     trial.suggest_float("eps_start", 0.8, 0.9)
     trial.suggest_float("eps_end", 0.02, 0.05)
-    trial.suggest_int("eps_decay", 200, 2000, step=50)
+    trial.suggest_int("eps_decay", 150, 2000, step=50)
     trial.suggest_float("tau", 0.005, 0.01, log=True)
     trial.suggest_float("learning_rate", 1e-4, 1e-2, log=True)
-    trial.suggest_int("batch_size", 256, 512, step=256)
-    trial.suggest_int("replay_mem", 256, 512, step=256)
+    trial.suggest_int("batch_size", 128, 512, step=128)
+    trial.suggest_int("replay_mem", 128, 512, step=128)
     trial.suggest_int("num_layers", 3, 6, step=1)
-    trial.suggest_int("num_neurons", 16, 64, step=16)
+    trial.suggest_int("num_neurons", 16, 80, step=16)
 
 
 def define_search_space_test(trial: optuna.Trial):
