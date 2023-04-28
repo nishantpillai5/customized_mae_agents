@@ -30,8 +30,8 @@ cfg = {
     # Non-HPO
     "strats": ["evasive", "hiding", "shifty"],
     "ray_batches": 3,
-    "eps_num": 100,
-    "max_cycles": 6000,
+    "eps_num": 6,
+    "max_cycles": 1000,
 }
 
 old_cfg = {

@@ -46,8 +46,9 @@ The `Makefile` and `setup.py` contains the central entry points for common tasks
 ### Common commands
 
 ```
-adversary train -v
+adversary train -v -d "6x10 test"
 player test ./models/example.pth -s random -v
+results record ./logs/XXX_policy.pth -s evasive
 ```
 
 # Windows Guide

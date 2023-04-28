@@ -21,7 +21,7 @@ def results():
 @click.option(
     "--eps-num",
     "-e",
-    default=1,
+    default=3,
     help="Episodes to record",
 )
 @click.option(
@@ -42,7 +42,7 @@ def record(ctx, adversary_model, strategy, eps_num, max_cycles):
     import torch
     from gymnasium.utils.save_video import save_video
 
-    from src.agent.constants import AGENTS, device
+    from src.agent.constants import AGENTS, cfg, device
     from src.agent.utils import DQN, StateCache, select_action
     from src.utils import get_logging_conf
 

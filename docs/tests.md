@@ -120,3 +120,56 @@ ranges: {
  'time_total_s': 331.25559759140015,
 
  This took around 1h10m
+
+
+
+ top 100 after long test (with broken shifty)
+num_neurons: best performing value was 16 (60%)
+num_layers: 3 layers was bad (6%), the 4 5 6 were all equal (30%), slighly better on 6
+replay_mem: only 256
+batch_size: only 512
+learning_rate: 40% around 0.0005, 20% around 0.0035, 15% around 0.0075, rest is low. So a bit random but with a high concentration under 0.002
+tau: 0.0055 29%, 0.0075 34%, and another third around 0.009 and 0.01
+eps_decay: 70% around 250 and 500
+eps_end: mostly between 0.02 and 0.035, with peaks at 0.022 and 0.028
+eps_start: seems random, highest at 0.85 (33%)
+gamma: seems random, but lower is better, so between 0.8 and 0.85 it is
+
+best result: {
+    "num_layers": 4,                        # in range, could be 6
+    "num_neurons": 32,                      # kinda out of range, but might work on longer tests
+    "replay_mem": 256,                      # yes
+    "batch_size": 512,                      # yes
+    "eps_decay": 400,                       # in range
+    "eps_end": 0.026976530765314137,        # in range
+    "eps_start": 0.8987838521753412,        # fair
+    "gamma": 0.8950865749131748,            # it's ok, but could be lower
+    "learning_rate": 0.007998321913735864,  # around one of the peaks
+    "tau": 0.009448523131629041,            # in one of the ranges
+
+
+ top 100 after long test with fixed shifty!!!
+
+
+replay_mem: only 256
+batch_size: only 512
+num_neurons: best performing value was 16 (47%), and 64 was fine too (28%)
+num_layers: 5 at 37%, 6 at 42%
+learning_rate: 40% around 0.0005, 20% around 0.001, 16% around 0.002, rest is low. So a bit random but with a high concentration under 0.002
+tau: 0.0055 17%, 0.0077 22%, rest is randomish
+eps_decay: 77% around 200 and 350
+eps_end: pretty much random
+eps_start: the more the better, 40% at 0.89
+gamma: seems random, but lower is better, so between 0.82 and 0.89 it is
+
+best result: {
+    "batch_size": 512,                      # yes
+    "eps_decay": 200,                       # in range
+    "eps_end": 0.039167333085595155,        # whatever is fine
+    "eps_start": 0.8914499472528596,        # spot on
+    "gamma": 0.8719405940387375,            # well kind of unexpected, but it's fine
+    "learning_rate": 0.0037918476613645136, # que? that's out of range
+    "num_layers": 6,                        # yup yup
+    "num_neurons": 16,                      # yeah good
+    "replay_mem": 256,                      # yes
+    "tau": 0.008439390442004039,            # yeah cool
