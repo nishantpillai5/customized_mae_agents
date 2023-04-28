@@ -73,7 +73,7 @@ def eval(ctx, filepaths, visualize):
 @click.option(
     "--desc",
     "-d",
-    default="",
+    default=None,
 )
 @click.pass_context
 def train(ctx, visualize, desc):
@@ -117,6 +117,7 @@ def train(ctx, visualize, desc):
         filename = worker_config["handlers"]["r_file"]["filename"]
 
         wandb_run = wandb.init(
+            name=("" if desc is None else desc) + " " + player_strat,
             project="customized_mae_agents",
             entity="ju-ai-thesis",
             config={
@@ -276,7 +277,7 @@ def tune(ctx, num_samples):
     from ray import tune
     from ray.air import session
 
-    from src.agent.constants import AGENTS, define_search_space, device, hpo_cfg
+    from src.agent.constants import AGENTS, define_search_space_test, device, hpo_cfg
     from src.agent.utils import (
         DQN,
         ReplayMemory,
@@ -436,7 +437,7 @@ def tune(ctx, num_samples):
     from ray.tune.search.optuna import OptunaSearch
 
     algo = OptunaSearch(
-        define_search_space,
+        define_search_space_test,
         metric="avg_ep_avg_reward",
         mode="max",
         sampler=NSGAIISampler(),

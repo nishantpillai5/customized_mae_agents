@@ -15,21 +15,23 @@ import torch
 
 device = torch.device(DEVICE)
 
-# After HPO ad_tune_Apr26_2305_40624569
+# After HPO ad_tune_Apr27_1435_06134012.log
 cfg = {
     "batch_size": 512,
-    "eps_decay": 400,
-    "eps_end": 0.026976530765314137,
-    "eps_start": 0.8987838521753412,
-    "gamma": 0.8950865749131748,
-    "learning_rate": 0.007998321913735864,
-    "num_layers": 4,
-    "num_neurons": 32,
+    "eps_decay": 200,
+    "eps_end": 0.039167333085595155,
+    "eps_start": 0.8914499472528596,
+    "gamma": 0.8719405940387375,
+    "learning_rate": 0.0037918476613645136,
+    "num_layers": 6,
+    "num_neurons": 16,
     "replay_mem": 256,
-    "tau": 0.009448523131629041,
+    "tau": 0.008439390442004039,
     # Non-HPO
     "strats": ["evasive", "hiding", "shifty"],
     "ray_batches": 3,
+    # "eps_num": 100,
+    # "max_cycles": 6000,
     "eps_num": 6,
     "max_cycles": 1000,
 }
@@ -43,11 +45,12 @@ old_cfg = {
     "tau": 0.005,
     "learning_rate": 1e-4,
     "replay_mem": 256,  # 00)  # rob: reduced to reduce RAM usage
-    "ray_batches": 48,
-    "eps_num": 100,
+    "ray_batches": 3,
+    "eps_num": 30,
     "max_cycles": 1000,
     "num_layers": 4,
     "num_neurons": 64,
+    "strats": ["evasive", "hiding", "shifty"],
 }
 
 test_cfg = {
@@ -80,6 +83,19 @@ def define_search_space(trial: optuna.Trial):
     trial.suggest_int("batch_size", 256, 512, step=256)
     trial.suggest_int("replay_mem", 256, 512, step=256)
     trial.suggest_int("num_layers", 3, 6, step=1)
+    trial.suggest_int("num_neurons", 16, 64, step=16)
+
+
+def define_search_space_test(trial: optuna.Trial):
+    trial.suggest_float("gamma", 0.85, 0.95)
+    trial.suggest_float("eps_start", 0.8, 0.9)
+    trial.suggest_float("eps_end", 0.03, 0.045)
+    trial.suggest_int("eps_decay", 180, 220, step=10)
+    trial.suggest_float("tau", 0.007, 0.009, log=True)
+    trial.suggest_float("learning_rate", 7e-4, 5e-3, log=True)
+    trial.suggest_int("batch_size", 256, 512, step=256)
+    trial.suggest_int("replay_mem", 256, 512, step=256)
+    trial.suggest_int("num_layers", 5, 8, step=1)
     trial.suggest_int("num_neurons", 16, 64, step=16)
 
 
