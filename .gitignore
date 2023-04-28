@@ -47,9 +47,6 @@ coverage.xml
 *.mo
 *.pot
 
-# Django stuff:
-*.log
-
 # Sphinx documentation
 docs/_build/
 
@@ -93,5 +90,6 @@ wandb/
 
 # Logs
 logs/*.csv
+logs/*.log
 logs/*.pth
 logs/videos/*

@@ -15,43 +15,43 @@ import torch
 
 device = torch.device(DEVICE)
 
-# After HPO ad_tune_Apr27_1435_06134012.log
-wait_cfg = {
-    "batch_size": 512,
-    "eps_decay": 200,
-    "eps_end": 0.039167333085595155,
-    "eps_start": 0.8914499472528596,
-    "gamma": 0.8719405940387375,
-    "learning_rate": 0.0037918476613645136,
-    "num_layers": 6,
-    "num_neurons": 16,
-    "replay_mem": 256,
-    "tau": 0.008439390442004039,
+# After HPO ad_tune_Apr28_1504_47118830.log
+cfg = {
+    "batch_size": 128,
+    "eps_decay": 1150,
+    "eps_end": 0.03396985858263406,
+    "eps_start": 0.8963227397939008,
+    "gamma": 0.9419425202019169,
+    "learning_rate": 0.00018585503849063466,
+    "num_layers": 3,
+    "num_neurons": 64,
+    "replay_mem": 384,
+    "tau": 0.009820318016914437,
     # Non-HPO
     "strats": ["evasive", "hiding", "shifty"],
     "ray_batches": 3,
     # "eps_num": 100,
     # "max_cycles": 6000,
-    "eps_num": 12,
-    "max_cycles": 1000,
+    "eps_num": 1,
+    "max_cycles": 10,
 }
 
-cfg = {
-    "batch_size": 128,
-    "gamma": 0.99,
-    "eps_start": 0.9,
-    "eps_end": 0.05,
-    "eps_decay": 1000,
-    "tau": 0.005,
-    "learning_rate": 1e-4,
-    "replay_mem": 256,  # 00)  # rob: reduced to reduce RAM usage
-    "ray_batches": 3,
-    "eps_num": 12,
-    "max_cycles": 1000,
-    "num_layers": 4,
-    "num_neurons": 64,
-    "strats": ["evasive", "hiding", "shifty"],
-}
+# cfg = {
+#     "batch_size": 128,
+#     "gamma": 0.99,
+#     "eps_start": 0.9,
+#     "eps_end": 0.05,
+#     "eps_decay": 1000,
+#     "tau": 0.005,
+#     "learning_rate": 1e-4,
+#     "replay_mem": 256,  # 00)  # rob: reduced to reduce RAM usage
+#     "ray_batches": 3,
+#     "eps_num": 12,
+#     "max_cycles": 1000,
+#     "num_layers": 4,
+#     "num_neurons": 64,
+#     "strats": ["evasive", "hiding", "shifty"],
+# }
 
 test_cfg = {
     **cfg,
@@ -66,7 +66,7 @@ test_cfg = {
 # }
 
 hpo_cfg = {  # testing values
-    "eps_num": 6,
+    "eps_num": 12,
     "max_cycles": 1000,
 }
 

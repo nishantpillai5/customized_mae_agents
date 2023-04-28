@@ -84,7 +84,6 @@ def train(ctx, visualize, desc):
     import torch.optim as optim
 
     import wandb
-    from src.results.main import record
     from src.agent.constants import AGENTS, cfg, device
     from src.agent.utils import (
         DQN,
@@ -93,6 +92,7 @@ def train(ctx, visualize, desc):
         optimize_model,
         select_action,
     )
+    from src.results.main import record
 
     print(f"Running for {','.join(cfg['strats'])} strats")
     print(f"Running for {cfg['eps_num']} episodes")
@@ -111,7 +111,7 @@ def train(ctx, visualize, desc):
         if not name:
             name = int(random.random() * 10000)
 
-        worker_config = get_logging_conf(f"ad_train_{player_strat}")
+        worker_config = get_logging_conf("ad_train", suffix=player_strat)
         logging.config.dictConfig(worker_config)
         logger = logging.getLogger("both")
 
@@ -247,7 +247,13 @@ def train(ctx, visualize, desc):
         artifact.add_file(local_path=model_filename)
         wandb_run.log_artifact(artifact)
 
-        ctx.invoke(record, [model_filename], player_agent_strat, 1, cfg["max_cycles"])
+        ctx.invoke(
+            record,
+            adversary_model=model_filename,
+            strategy=player_agent_strat,
+            eps_num=3,
+            max_cycles=cfg["max_cycles"],
+        )
 
         return torch.tensor(episode_rewards, dtype=torch.float)
 
@@ -281,7 +287,7 @@ def tune(ctx, num_samples):
     from ray import tune
     from ray.air import session
 
-    from src.agent.constants import AGENTS, define_search_space_test, device, hpo_cfg
+    from src.agent.constants import AGENTS, define_search_space, device, hpo_cfg
     from src.agent.utils import (
         DQN,
         ReplayMemory,
@@ -441,7 +447,7 @@ def tune(ctx, num_samples):
     from ray.tune.search.optuna import OptunaSearch
 
     algo = OptunaSearch(
-        define_search_space_test,
+        define_search_space,
         metric="avg_ep_avg_reward",
         mode="max",
         sampler=NSGAIISampler(),
