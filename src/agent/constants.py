@@ -32,7 +32,7 @@ cfg = {
     "ray_batches": 3,
     # "eps_num": 100,
     # "max_cycles": 6000,
-    "eps_num": 6,
+    "eps_num": 12,
     "max_cycles": 1000,
 }
 

@@ -71,7 +71,7 @@ class DQN(nn.Module):
         # return self.layer4(x)
 
         for layer in self.layers:
-            x = layer(x)
+            x = F.relu(layer(x))
 
         return x
 
