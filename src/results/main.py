@@ -134,10 +134,15 @@ def eval(ctx, adversary_model, eps_num, max_cycles):
                     if done:  # FIXME: is there a reason for two checks lol?
                         episode_durations.append(t + 1)
                         episode_rewards += rewards[-4:]
-                        logger.info(f"m{model_strategy[0]}p{player_strategy[0]} Ep reward: {episode_rewards[-4:]}")
+                        logger.info(
+                            f"m{model_strategy[0]}p{player_strategy[0]} Ep reward: {episode_rewards[-4:]}"
+                        )
                         break
 
-            logger.info("m{model_strategy[0]}p{player_strategy[0]} Complete Ep reward: \n" + pformat(np.asarray(episode_rewards)))
+            logger.info(
+                f"m{model_strategy[0]}p{player_strategy[0]} Complete Ep reward: \n"
+                + pformat(np.asarray(episode_rewards))
+            )
             reward_dict[model_strategy][player_strategy] = (
                 np.asarray(episode_rewards).reshape((eps_num, 4)).sum(axis=1)
             )
@@ -153,7 +158,10 @@ def eval(ctx, adversary_model, eps_num, max_cycles):
                 )
                 stats.update(
                     {
-                        f"m{model_strat[0]}p{s1_player_strat[0]}_vs_m{model_strat[0]}p{s2_player_strat[0]}": (statistic, pvalue)
+                        f"m{model_strat[0]}p{s1_player_strat[0]}_vs_m{model_strat[0]}p{s2_player_strat[0]}": (
+                            statistic,
+                            pvalue,
+                        )
                     }
                 )
     logger.info("T-test: \n" + pformat(stats))
@@ -290,4 +298,3 @@ def record(ctx, adversary_model, strategy, eps_num, max_cycles):
 
 results.add_command(record)
 results.add_command(eval)
-
