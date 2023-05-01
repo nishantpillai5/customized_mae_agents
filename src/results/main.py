@@ -11,7 +11,6 @@ def results():
 
 @click.command()
 @click.argument("adversary_model")
-
 @click.pass_context
 def eval(ctx, adversary_model):
     import glob
@@ -43,20 +42,26 @@ def eval(ctx, adversary_model):
 
     reward_dict = {s: {s: [] for s in cfg["strats"]} for s in cfg["strats"]}
 
-    model_dict = {}
+    model_dict = {s: [] for s in cfg["strats"]}
 
+    num_of_models = 0
     for s in cfg["strats"]:
         for m in glob.glob(adversary_model + "*policy.pth"):
             if s in m:
-                model_dict.update({s: m})
+                model_dict[s].append(m)
+                num_of_models += 1
 
-    print("Models:")
-    for key, value in model_dict.items():
-        print(value)
+    print(f"{num_of_models} models")
+    # for key, value in model_dict.items():
+    #     print(value)
 
-    for model_strategy in cfg["strats"]:
-        # FIXME: Get number of actions from gym action space
-        n_actions = 5
+    import ray
+
+    avg_ep_reward_arr = []
+
+    @ray.remote
+    def ray_eval(model, model_strategy, player_strat, name=None):
+        n_actions = 5  # FIXME: Get number of actions from gym action space
 
         env = env_creator(render_mode="rgb_array")
         env.reset()
@@ -68,97 +73,110 @@ def eval(ctx, adversary_model):
 
         policy_net = DQN(n_observations, n_actions, cfg).to(device)
         # target_net = DQN(n_observations, n_actions, cfg).to(device)
-        policy_net.load_state_dict(torch.load(model_dict[model_strategy]))
+        policy_net.load_state_dict(torch.load(model))
         # target_net.load_state_dict(torch.load(PATH))
         policy_net.eval()
 
+        steps_done = 0
+        episode_durations = []
+        episode_rewards = []
         avg_ep_reward_arr = []
 
-        for player_strategy in cfg["strats"]:
-            steps_done = 0
-            episode_durations = []
-            episode_rewards = []
+        state_cache = StateCache()
 
-            state_cache = StateCache()
+        for i_episode in range(cfg["eps_num"]):
+            env.reset()
+            env.render()
+            state, reward, _, _, _ = env.last()
 
-            for i_episode in range(cfg["eps_num"]):
-                env.reset()
-                env.render()
-                state, reward, _, _, _ = env.last()
+            for agent in AGENTS:
+                state_cache.save_state(agent, state, reward)
 
-                for agent in AGENTS:
-                    state_cache.save_state(agent, state, reward)
+            rewards = []
+            actions = {agent: torch.tensor([[0]], device=device) for agent in AGENTS}
+            t = 0
+            for agent in env.agent_iter():
+                t += 1
+                # agent = AGENTS[t % 4]
+                previous_state = state_cache.get_state(agent)
+                observation, reward, terminated, truncated, _ = env.last()
 
-                rewards = []
-                actions = {
-                    agent: torch.tensor([[0]], device=device) for agent in AGENTS
-                }
-                t = 0
-                for agent in env.agent_iter():
-                    t += 1
-                    # agent = AGENTS[t % 4]
-                    previous_state = state_cache.get_state(agent)
-                    observation, reward, terminated, truncated, _ = env.last()
+                rewards.append(reward)
 
-                    rewards.append(reward)
-
-                    observation, reward = state_cache.deal_state(
-                        agent, observation, reward
+                observation, reward = state_cache.deal_state(agent, observation, reward)
+                old_action = actions[agent]
+                done = terminated or truncated
+                if done:
+                    env.step(None)
+                else:
+                    action, steps_done = select_action(
+                        cfg,
+                        observation,
+                        policy_net,
+                        good_agent=("agent" in agent),
+                        steps_done=steps_done,
+                        random_action=env.action_space("agent_0").sample(),
+                        player_strat=player_strategy,
                     )
-                    old_action = actions[agent]
-                    done = terminated or truncated
-                    if done:
-                        env.step(None)
-                    else:
-                        action, steps_done = select_action(
-                            cfg,
-                            observation,
-                            policy_net,
-                            good_agent=("agent" in agent),
-                            steps_done=steps_done,
-                            random_action=env.action_space("agent_0").sample(),
-                            player_strat=player_strategy,
-                        )
-                        actions[agent] = action
-                        env.step(action.item())
+                    actions[agent] = action
+                    env.step(action.item())
 
-                    env.render()
+                env.render()
 
-                    if done:  # FIXME: is there a reason for two checks lol?
-                        episode_durations.append(t + 1)
-                        episode_rewards += rewards[-4:]
-                        rewards = np.array(rewards)
+                if done:  # FIXME: is there a reason for two checks lol?
+                    episode_durations.append(t + 1)
+                    episode_rewards += rewards[-4:]
+                    rewards = np.array(rewards)
 
-                        log_data = {
-                            "episode_rewards": episode_rewards[-4:],
-                            "avg_ep_reward": np.sum(rewards) / (cfg["max_cycles"] * 3),
-                            "num_collisions": (rewards > 0).sum() // (3),
-                            "distance_penalty": (
-                                np.sum(rewards[(rewards < 0)]) / (cfg["max_cycles"] * 3)
-                            ),
-                        }
-                        
-                        logger.info(
-                            f"m{model_strategy[0]}p{player_strategy[0]} This ep avg reward: {log_data['avg_ep_reward']}"
-                        )
+                    log_data = {
+                        "episode_rewards": episode_rewards[-4:],
+                        "avg_ep_reward": np.sum(rewards) / (cfg["max_cycles"] * 3),
+                        "num_collisions": (rewards > 0).sum() // (3),
+                        "distance_penalty": (
+                            np.sum(rewards[(rewards < 0)]) / (cfg["max_cycles"] * 3)
+                        ),
+                    }
 
-                        avg_ep_reward_arr.append(log_data['avg_ep_reward'])
-                        break
+                    logger.info(
+                        f"m{model_strategy[0]}p{player_strategy[0]} This ep avg reward: {log_data['avg_ep_reward']}"
+                    )
+                    avg_ep_reward_arr.append(log_data["avg_ep_reward"])
 
-            logger.info(
-                f"m{model_strategy[0]}p{player_strategy[0]} Complete Ep reward: \n"
-                + pformat(np.asarray(episode_rewards))
-            )
-            reward_dict[model_strategy][player_strategy].append(avg_ep_reward_arr)
+        logger.info(
+            f"m{model_strategy[0]}p{player_strategy[0]} Complete Ep reward: \n"
+            + pformat(np.asarray(avg_ep_reward_arr))
+        )
+
+        return avg_ep_reward_arr
+
+    task_handles = {}
+    try:
+        for model_strategy in cfg["strats"]:
+            for model in model_dict[model_strategy]:
+                for player_strategy in cfg["strats"]:
+                    task_handles[model_strategy][model][
+                        player_strategy
+                    ] = ray_eval.remote(model, model_strategy, player_strategy, name=i)
+
+        output = ray.get(task_handles)
+        print(output)
+    except KeyboardInterrupt:
+        for i in task_handles:
+            ray.cancel(i)
+
+    reward_dict[model_strategy][player_strategy].append(avg_ep_reward_arr)
 
     stats = {}
-
 
     for model_strat in cfg["strats"]:
         for s1_player_strat in cfg["strats"]:
             for s2_player_strat in cfg["strats"]:
-                sample1 = np.asarray(reward_dict[model_strat][s1_player_strat]).flatten()
-                sample2 = np.asarray(reward_dict[model_strat][s2_player_strat]).flatten()
+                sample1 = np.asarray(
+                    reward_dict[model_strat][s1_player_strat]
+                ).flatten()
+                sample2 = np.asarray(
+                    reward_dict[model_strat][s2_player_strat]
+                ).flatten()
                 # Reject null i.e. the mean of the first distribution is greater than the mean of the second distribution.
                 statistic, pvalue = scipy.stats.ttest_ind(
                     sample1, sample2, equal_var=False, alternative="greater"
@@ -174,7 +192,11 @@ def eval(ctx, adversary_model):
     logger.info("T-test: \n" + pformat(stats))
     results = {}
     for k, v in stats.items():
-        results[k] = "greater mean, reject null :)" if v[1] < 0.05 else "equal mean, can't reject :("
+        results[k] = (
+            "greater mean, reject null :)"
+            if v[1] < 0.05
+            else "equal mean, can't reject :("
+        )
     logger.info("Results: \n" + pformat(results))
 
 

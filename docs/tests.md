@@ -173,3 +173,15 @@ best result: {
     "num_neurons": 16,                      # yeah good
     "replay_mem": 256,                      # yes
     "tau": 0.008439390442004039,            # yeah cool
+
+
+
+
+
+# Graphs
+
+- Training of the long-term, check the average score, divide between average distance penality and average collisions
+- For the play-time, just show the distributions of scores etc after the single long episode
+- For tests, show the actual distributions of each test, so we can notice if the test on same strategy is actually better on average
+
+If possible, have a new short training test that shows moving average rewards, to check when it's actually starting to learn!
