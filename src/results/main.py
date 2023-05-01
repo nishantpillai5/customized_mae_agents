@@ -159,8 +159,9 @@ def eval(ctx, adversary_model):
             for s2_player_strat in cfg["strats"]:
                 sample1 = np.asarray(reward_dict[model_strat][s1_player_strat]).flatten()
                 sample2 = np.asarray(reward_dict[model_strat][s2_player_strat]).flatten()
+                # Reject null i.e. the mean of the first distribution is greater than the mean of the second distribution.
                 statistic, pvalue = scipy.stats.ttest_ind(
-                    sample1, sample2, equal_var=False  # FIXME: Not sure
+                    sample1, sample2, equal_var=False, alternative="greater"
                 )
                 stats.update(
                     {
@@ -173,7 +174,7 @@ def eval(ctx, adversary_model):
     logger.info("T-test: \n" + pformat(stats))
     results = {}
     for k, v in stats.items():
-        results[k] = "reject null :)" if v[1] < 0.05 else "same mean, can't reject :("
+        results[k] = "greater mean, reject null :)" if v[1] < 0.05 else "equal mean, can't reject :("
     logger.info("Results: \n" + pformat(results))
 
 
