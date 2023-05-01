@@ -30,10 +30,14 @@ cfg = {
     # Non-HPO
     "strats": ["random", "evasive", "hiding", "shifty", "multiple"],
     "ray_batches": 10,
-    # "eps_num": 100,
-    # "max_cycles": 6000,
-    "eps_num": 100,  # long-term test
-    "max_cycles": 1000,  # long-term test
+
+    # long_time test
+    "eps_num": 100,  
+    "max_cycles": 1000, 
+
+    # play_time test
+    # "eps_num": 1,  
+    # "max_cycles": 5000,
 }
 
 # cfg = {

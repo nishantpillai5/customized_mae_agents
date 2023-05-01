@@ -98,6 +98,8 @@ def train(ctx, visualize, desc):
     print(f"Running for {cfg['eps_num']} episodes")
     print(f"An episode is {cfg['max_cycles']} cycles")
 
+    cfg["strats_except_multiple"] = [x for x in cfg["strats"] if x != "multiple"]
+
     def env_creator(render_mode="rgb_array"):
         from src.world import world_utils
 
@@ -159,7 +161,10 @@ def train(ctx, visualize, desc):
             if player_strat != "multiple":
                 player_agent_strat = player_strat
             else:
-                player_agent_strat = ["evasive", "hiding", "shifty"][i_episode % 3]
+                # player_agent_strat = ["evasive", "hiding", "shifty"][i_episode % 3]
+                player_agent_strat = cfg["strats_except_multiple"][
+                    i_episode % len(cfg["strats_except_multiple"])
+                ]
             env.reset()
             env.render()
             state, reward, _, _, _ = env.last()

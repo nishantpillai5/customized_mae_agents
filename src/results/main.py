@@ -30,6 +30,8 @@ def eval(ctx, adversary_model):
     from src.agent.utils import DQN, StateCache, select_action
     from src.utils import get_logging_conf
 
+    cfg["strats_except_multiple"] = [x for x in cfg["strats"] if x != "multiple"]
+
     def env_creator(render_mode="rgb_array"):
         from src.world import world_utils
 
@@ -40,8 +42,6 @@ def eval(ctx, adversary_model):
     logging.config.dictConfig(worker_config)
     logger = logging.getLogger("both")
 
-    reward_dict = {s: {s: [] for s in cfg["strats"]} for s in cfg["strats"]}
-
     model_dict = {s: [] for s in cfg["strats"]}
 
     num_of_models = 0
@@ -51,9 +51,7 @@ def eval(ctx, adversary_model):
                 model_dict[s].append(m)
                 num_of_models += 1
 
-    print(f"{num_of_models} models")
-    # for key, value in model_dict.items():
-    #     print(value)
+    logger.info(f"{num_of_models} models")
 
     import ray
 
@@ -85,6 +83,14 @@ def eval(ctx, adversary_model):
         state_cache = StateCache()
 
         for i_episode in range(cfg["eps_num"]):
+            if player_strat != "multiple":
+                player_agent_strat = player_strat
+            else:
+                # player_agent_strat = ["evasive", "hiding", "shifty"][i_episode % 3]
+                player_agent_strat = cfg["strats_except_multiple"][
+                    i_episode % len(cfg["strats_except_multiple"])
+                ]
+
             env.reset()
             env.render()
             state, reward, _, _, _ = env.last()
@@ -141,6 +147,7 @@ def eval(ctx, adversary_model):
                         f"m{model_strategy[0]}p{player_strategy[0]} This ep avg reward: {log_data['avg_ep_reward']}"
                     )
                     avg_ep_reward_arr.append(log_data["avg_ep_reward"])
+                    break
 
         logger.info(
             f"m{model_strategy[0]}p{player_strategy[0]} Complete Ep reward: \n"
@@ -150,46 +157,64 @@ def eval(ctx, adversary_model):
         return avg_ep_reward_arr
 
     task_handles = {}
+
     try:
         for model_strategy in cfg["strats"]:
-            for model in model_dict[model_strategy]:
-                for player_strategy in cfg["strats"]:
-                    task_handles[model_strategy][model][
-                        player_strategy
-                    ] = ray_eval.remote(model, model_strategy, player_strategy, name=i)
+            # if len(model_dict[model_strategy]) == 0:
+            #     continue
+            task_handles[model_strategy] = {}
+            for player_strategy in cfg["strats_except_multiple"]:
+                task_handles[model_strategy][player_strategy] = []
+                for model in model_dict[model_strategy]:
+                    task_handles[model_strategy][player_strategy].append(
+                        ray_eval.remote(model, model_strategy, player_strategy)
+                    )
 
-        output = ray.get(task_handles)
-        print(output)
+        reward_dict = {
+            k1: {k2: ray.get(v2) for k2, v2 in v1.items()}
+            for k1, v1 in task_handles.items()
+        }
+
     except KeyboardInterrupt:
         for i in task_handles:
             ray.cancel(i)
 
-    reward_dict[model_strategy][player_strategy].append(avg_ep_reward_arr)
-
     stats = {}
+
+    logger.info("Reward dict: \n" + pformat(reward_dict))
 
     for model_strat in cfg["strats"]:
         for s1_player_strat in cfg["strats"]:
             for s2_player_strat in cfg["strats"]:
-                sample1 = np.asarray(
-                    reward_dict[model_strat][s1_player_strat]
-                ).flatten()
-                sample2 = np.asarray(
-                    reward_dict[model_strat][s2_player_strat]
-                ).flatten()
-                # Reject null i.e. the mean of the first distribution is greater than the mean of the second distribution.
-                statistic, pvalue = scipy.stats.ttest_ind(
-                    sample1, sample2, equal_var=False, alternative="greater"
-                )
-                stats.update(
-                    {
-                        f"m{model_strat[0]}p{s1_player_strat[0]}_vs_m{model_strat[0]}p{s2_player_strat[0]}": (
-                            statistic,
-                            pvalue,
-                        )
-                    }
-                )
-    logger.info("T-test: \n" + pformat(stats))
+                try:
+                    sample1 = np.asarray(
+                        reward_dict[model_strat][s1_player_strat]
+                    ).flatten()
+                    sample2 = np.asarray(
+                        reward_dict[model_strat][s2_player_strat]
+                    ).flatten()
+
+                    statistic, pvalue = scipy.stats.ttest_ind(
+                        sample1,
+                        sample2,
+                        equal_var=False,
+                        # alternative="greater"
+                    )
+                    stats.update(
+                        {
+                            f"m{model_strat[0]}p{s1_player_strat[0]}_vs_m{model_strat[0]}p{s2_player_strat[0]}": (
+                                statistic,
+                                pvalue,
+                            )
+                        }
+                    )
+                except KeyError:
+                    continue
+    logger.info(
+        "T-test: \n"
+        # + "Reject null i.e. the mean of the first distribution is greater than the mean of the second distribution. \n"
+        + pformat(stats)
+    )
     results = {}
     for k, v in stats.items():
         results[k] = (
