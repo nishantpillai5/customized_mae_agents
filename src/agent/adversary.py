@@ -258,7 +258,7 @@ def train(ctx, visualize, desc):
 
         return torch.tensor(episode_rewards, dtype=torch.float)
 
-    ray_batches = cfg["strats"]*cfg["ray_batches"]
+    ray_batches = cfg["strats"] * cfg["ray_batches"]
     task_handles = []
     try:
         for i in range(len(ray_batches)):
