@@ -28,12 +28,12 @@ cfg = {
     "replay_mem": 384,
     "tau": 0.009820318016914437,
     # Non-HPO
-    "strats": ["evasive", "hiding", "shifty"],
-    "ray_batches": 3,
+    "strats": ["random", "evasive", "hiding", "shifty"],
+    "ray_batches": 10,
     # "eps_num": 100,
     # "max_cycles": 6000,
-    "eps_num": 12,
-    "max_cycles": 1000,
+    "eps_num": 1, #play-time test
+    "max_cycles": 5000, #play-time test
 }
 
 # cfg = {
@@ -58,6 +58,12 @@ test_cfg = {
     "ray_batches": 3,
     "eps_num": 1,
     "max_cycles": 5000,
+}
+
+eval_cfg = {
+    **cfg,
+    "eps_num": 5,
+    "max_cycles": 500,
 }
 
 # hpo_cfg = {  # testing values

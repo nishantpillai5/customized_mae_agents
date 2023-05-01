@@ -247,20 +247,22 @@ def train(ctx, visualize, desc):
         artifact.add_file(local_path=model_filename)
         wandb_run.log_artifact(artifact)
 
-        ctx.invoke(
-            record,
-            adversary_model=model_filename,
-            strategy=player_agent_strat,
-            eps_num=3,
-            max_cycles=cfg["max_cycles"],
-        )
+        # Record
+        # ctx.invoke(
+        #     record,
+        #     adversary_model=model_filename,
+        #     strategy=player_agent_strat,
+        #     eps_num=3,
+        #     max_cycles=cfg["max_cycles"],
+        # )
 
         return torch.tensor(episode_rewards, dtype=torch.float)
 
+    ray_batches = cfg["strats"]*cfg["ray_batches"]
     task_handles = []
     try:
-        for i in range(len(cfg["strats"])):
-            task_handles.append(ray_train.remote(cfg["strats"][i], name=i))
+        for i in range(len(ray_batches)):
+            task_handles.append(ray_train.remote(ray_batches[i], name=i))
 
         output = ray.get(task_handles)
         print(output)

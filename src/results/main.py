@@ -11,20 +11,9 @@ def results():
 
 @click.command()
 @click.argument("adversary_model")
-@click.option(
-    "--eps-num",
-    "-e",
-    default=6,
-    help="Episodes to test",
-)
-@click.option(
-    "--max-cycles",
-    "-m",
-    default=1000,
-    help="Max cycles",
-)
+
 @click.pass_context
-def eval(ctx, adversary_model, eps_num, max_cycles):
+def eval(ctx, adversary_model):
     import glob
     import logging
     import logging.config
@@ -33,24 +22,26 @@ def eval(ctx, adversary_model, eps_num, max_cycles):
     from pprint import pformat
 
     import numpy as np
+    import scipy
     import torch
     from gymnasium.utils.save_video import save_video
 
-    from src.agent.constants import AGENTS, cfg, device
+    from src.agent.constants import AGENTS, device
+    from src.agent.constants import eval_cfg as cfg
     from src.agent.utils import DQN, StateCache, select_action
     from src.utils import get_logging_conf
 
     def env_creator(render_mode="rgb_array"):
         from src.world import world_utils
 
-        env = world_utils.env(render_mode=render_mode, max_cycles=max_cycles)
+        env = world_utils.env(render_mode=render_mode, max_cycles=cfg["max_cycles"])
         return env
 
     worker_config = get_logging_conf(f"eval")
     logging.config.dictConfig(worker_config)
-    logger = logging.getLogger("test")
+    logger = logging.getLogger("both")
 
-    reward_dict = {s: {s: None for s in cfg["strats"]} for s in cfg["strats"]}
+    reward_dict = {s: {s: [] for s in cfg["strats"]} for s in cfg["strats"]}
 
     model_dict = {}
 
@@ -81,6 +72,8 @@ def eval(ctx, adversary_model, eps_num, max_cycles):
         # target_net.load_state_dict(torch.load(PATH))
         policy_net.eval()
 
+        avg_ep_reward_arr = []
+
         for player_strategy in cfg["strats"]:
             steps_done = 0
             episode_durations = []
@@ -88,7 +81,7 @@ def eval(ctx, adversary_model, eps_num, max_cycles):
 
             state_cache = StateCache()
 
-            for i_episode in range(eps_num):
+            for i_episode in range(cfg["eps_num"]):
                 env.reset()
                 env.render()
                 state, reward, _, _, _ = env.last()
@@ -134,25 +127,38 @@ def eval(ctx, adversary_model, eps_num, max_cycles):
                     if done:  # FIXME: is there a reason for two checks lol?
                         episode_durations.append(t + 1)
                         episode_rewards += rewards[-4:]
+                        rewards = np.array(rewards)
+
+                        log_data = {
+                            "episode_rewards": episode_rewards[-4:],
+                            "avg_ep_reward": np.sum(rewards) / (cfg["max_cycles"] * 3),
+                            "num_collisions": (rewards > 0).sum() // (3),
+                            "distance_penalty": (
+                                np.sum(rewards[(rewards < 0)]) / (cfg["max_cycles"] * 3)
+                            ),
+                        }
+                        
                         logger.info(
-                            f"m{model_strategy[0]}p{player_strategy[0]} Ep reward: {episode_rewards[-4:]}"
+                            f"m{model_strategy[0]}p{player_strategy[0]} This ep avg reward: {log_data['avg_ep_reward']}"
                         )
+
+                        avg_ep_reward_arr.append(log_data['avg_ep_reward'])
                         break
 
             logger.info(
                 f"m{model_strategy[0]}p{player_strategy[0]} Complete Ep reward: \n"
                 + pformat(np.asarray(episode_rewards))
             )
-            reward_dict[model_strategy][player_strategy] = (
-                np.asarray(episode_rewards).reshape((eps_num, 4)).sum(axis=1)
-            )
+            reward_dict[model_strategy][player_strategy].append(avg_ep_reward_arr)
 
     stats = {}
+
+
     for model_strat in cfg["strats"]:
         for s1_player_strat in cfg["strats"]:
             for s2_player_strat in cfg["strats"]:
-                sample1 = reward_dict[model_strat][s1_player_strat]
-                sample2 = reward_dict[model_strat][s2_player_strat]
+                sample1 = np.asarray(reward_dict[model_strat][s1_player_strat]).flatten()
+                sample2 = np.asarray(reward_dict[model_strat][s2_player_strat]).flatten()
                 statistic, pvalue = scipy.stats.ttest_ind(
                     sample1, sample2, equal_var=False  # FIXME: Not sure
                 )
@@ -165,6 +171,10 @@ def eval(ctx, adversary_model, eps_num, max_cycles):
                     }
                 )
     logger.info("T-test: \n" + pformat(stats))
+    results = {}
+    for k, v in stats.items():
+        results[k] = "reject null :)" if v[1] < 0.05 else "same mean, can't reject :("
+    logger.info("Results: \n" + pformat(results))
 
 
 @click.command()
