@@ -23,6 +23,7 @@ def eval(ctx, adversary_model):
     import numpy as np
     import scipy
     import torch
+    import json
     from gymnasium.utils.save_video import save_video
 
     from src.agent.constants import AGENTS, device
@@ -42,6 +43,8 @@ def eval(ctx, adversary_model):
     logging.config.dictConfig(worker_config)
     logger = logging.getLogger("both")
 
+    filename = worker_config["handlers"]["r_file"]["filename"]
+
     model_dict = {s: [] for s in cfg["strats"]}
 
     num_of_models = 0
@@ -51,7 +54,8 @@ def eval(ctx, adversary_model):
                 model_dict[s].append(m)
                 num_of_models += 1
 
-    logger.info(f"{num_of_models} models")
+    logger.info(f"Finding: {adversary_model}*")
+    logger.info(f"Found  : {num_of_models} models")
 
     import ray
 
@@ -182,6 +186,8 @@ def eval(ctx, adversary_model):
     stats = {}
 
     logger.info("Reward dict: \n" + pformat(reward_dict))
+    with open(f"{filename}_rewards.json", 'w') as f:
+        json.dump(reward_dict, f)
 
     for model_strat in cfg["strats"]:
         for s1_player_strat in cfg["strats"]:
@@ -198,7 +204,7 @@ def eval(ctx, adversary_model):
                         sample1,
                         sample2,
                         equal_var=False,
-                        # alternative="greater"
+                        alternative="greater"
                     )
                     stats.update(
                         {
@@ -237,7 +243,7 @@ def eval(ctx, adversary_model):
 @click.option(
     "--eps-num",
     "-e",
-    default=3,
+    default=1,
     help="Episodes to record",
 )
 @click.option(
@@ -350,7 +356,6 @@ def record(ctx, adversary_model, strategy, eps_num, max_cycles):
                 )
                 break
 
-    # TODO: Aggregate and Log Rewards
     logger.info("Complete Ep reward: \n" + pformat(np.asarray(episode_rewards)))
 
 
