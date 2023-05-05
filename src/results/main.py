@@ -14,6 +14,7 @@ def results():
 @click.pass_context
 def eval(ctx, adversary_model):
     import glob
+    import json
     import logging
     import logging.config
     import os
@@ -23,7 +24,6 @@ def eval(ctx, adversary_model):
     import numpy as np
     import scipy
     import torch
-    import json
     from gymnasium.utils.save_video import save_video
 
     from src.agent.constants import AGENTS, device
@@ -126,7 +126,7 @@ def eval(ctx, adversary_model):
                         good_agent=("agent" in agent),
                         steps_done=steps_done,
                         random_action=env.action_space("agent_0").sample(),
-                        player_strat=player_strategy,
+                        player_strat=player_agent_strat,
                     )
                     actions[agent] = action
                     env.step(action.item())
@@ -148,13 +148,13 @@ def eval(ctx, adversary_model):
                     }
 
                     logger.info(
-                        f"m{model_strategy[0]}p{player_strategy[0]} This ep avg reward: {log_data['avg_ep_reward']}"
+                        f"m{model_strategy[0]}p{player_strat[0]} This ep avg reward: {log_data['avg_ep_reward']}"
                     )
                     avg_ep_reward_arr.append(log_data["avg_ep_reward"])
                     break
 
         logger.info(
-            f"m{model_strategy[0]}p{player_strategy[0]} Complete Ep reward: \n"
+            f"m{model_strategy[0]}p{player_strat[0]} Complete Ep reward: \n"
             + pformat(np.asarray(avg_ep_reward_arr))
         )
 
@@ -186,7 +186,7 @@ def eval(ctx, adversary_model):
     stats = {}
 
     logger.info("Reward dict: \n" + pformat(reward_dict))
-    with open(f"{filename}_rewards.json", 'w') as f:
+    with open(f"{filename}_rewards.json", "w") as f:
         json.dump(reward_dict, f)
 
     for model_strat in cfg["strats"]:
@@ -201,10 +201,7 @@ def eval(ctx, adversary_model):
                     ).flatten()
 
                     statistic, pvalue = scipy.stats.ttest_ind(
-                        sample1,
-                        sample2,
-                        equal_var=False,
-                        alternative="greater"
+                        sample1, sample2, equal_var=False, alternative="greater"
                     )
                     stats.update(
                         {

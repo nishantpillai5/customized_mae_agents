@@ -33,7 +33,7 @@ clean:
 
 ## Delete all log files and saved log models
 clean_logs:
-	find ./logs/ -type f ! \( -name "*.yaml" -o -name "*.git*" \) -delete
+	find ./logs/ -maxdepth 1 -type f ! \( -name "*.yaml" -o -name "*.git*" \) -delete
 
 ## Clean all generated data except rosbags
 clean_data:

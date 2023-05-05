@@ -57,18 +57,10 @@ class DQN(nn.Module):
             [nn.Linear(layers[i], layers[i + 1]) for i in range(len(layers) - 1)]
         )
 
-        # self.layer1 = nn.Linear(n_observations, 64)
-        # self.layer2 = nn.Linear(64, 32)
-        # self.layer3 = nn.Linear(32, 20)
-        # self.layer4 = nn.Linear(20, n_actions)
 
     # Called with either one element to determine next action, or a batch
     # during optimization. Returns tensor([[left0exp,right0exp]...]).
     def forward(self, x):
-        # x = F.relu(self.layer1(x))
-        # x = F.relu(self.layer2(x))
-        # x = F.relu(self.layer3(x))
-        # return self.layer4(x)
 
         for layer in self.layers[:-1]:
             x = F.relu(layer(x))

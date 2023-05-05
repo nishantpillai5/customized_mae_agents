@@ -93,3 +93,6 @@ logs/*.csv
 logs/*.log
 logs/*.pth
 logs/videos/*
+logs/play_time/*
+logs/mid_time/*
+logs/long_time/*
