@@ -51,7 +51,7 @@ player test ./models/example.pth -s random -v
 results record ./logs/XXX_policy.pth -s evasive
 ```
 
-# Windows Guide
+### Windows Guide
 
 ```
 conda env create --prefix ./$(ENV_DIR) --file environment.yml
