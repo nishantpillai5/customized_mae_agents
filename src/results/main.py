@@ -189,30 +189,31 @@ def eval(ctx, adversary_model):
     with open(f"{filename}_rewards.json", "w") as f:
         json.dump(reward_dict, f)
 
-    for model_strat in cfg["strats"]:
-        for s1_player_strat in cfg["strats"]:
-            for s2_player_strat in cfg["strats"]:
-                try:
-                    sample1 = np.asarray(
-                        reward_dict[model_strat][s1_player_strat]
-                    ).flatten()
-                    sample2 = np.asarray(
-                        reward_dict[model_strat][s2_player_strat]
-                    ).flatten()
+    for x_model_strat in cfg["strats"]:
+        for y_model_strat in cfg["strats"]:
+            for s1_player_strat in cfg["strats"]:
+                for s2_player_strat in cfg["strats"]:
+                    try:
+                        sample1 = np.asarray(
+                            reward_dict[x_model_strat][s1_player_strat]
+                        ).flatten()
+                        sample2 = np.asarray(
+                            reward_dict[y_model_strat][s2_player_strat]
+                        ).flatten()
 
-                    statistic, pvalue = scipy.stats.ttest_ind(
-                        sample1, sample2, equal_var=False, alternative="greater"
-                    )
-                    stats.update(
-                        {
-                            f"m{model_strat[0]}p{s1_player_strat[0]}_vs_m{model_strat[0]}p{s2_player_strat[0]}": (
-                                statistic,
-                                pvalue,
-                            )
-                        }
-                    )
-                except KeyError:
-                    continue
+                        statistic, pvalue = scipy.stats.ttest_ind(
+                            sample1, sample2, equal_var=False, alternative="greater"
+                        )
+                        stats.update(
+                            {
+                                f"m{x_model_strat[0]}p{s1_player_strat[0]}_vs_m{y_model_strat[0]}p{s2_player_strat[0]}": (
+                                    statistic,
+                                    pvalue,
+                                )
+                            }
+                        )
+                    except KeyError:
+                        continue
     logger.info(
         "T-test: \n"
         # + "Reject null i.e. the mean of the first distribution is greater than the mean of the second distribution. \n"

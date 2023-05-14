@@ -1,8 +1,8 @@
+import json
 import logging
 import logging.config
 from pathlib import Path
 from pprint import pformat, pprint
-import json
 
 import click
 import numpy as np
@@ -120,7 +120,7 @@ def train(ctx, visualize, desc):
 
         filename = worker_config["handlers"]["r_file"]["filename"]
 
-        #wandb_run = wandb.init(
+        # wandb_run = wandb.init(
         #    name=("" if desc is None else desc) + " " + player_strat,
         #    project="customized_mae_agents",
         #    entity="ju-ai-thesis",
@@ -131,7 +131,7 @@ def train(ctx, visualize, desc):
         #        # Hyperparameters
         #        **cfg,
         #    },
-        #)
+        # )
         # FIXME: Get number of actions from gym action space
         n_actions = 5
 
@@ -236,13 +236,13 @@ def train(ctx, visualize, desc):
                     }
                     if cfg["eps_num"] == 1:
                         singlep_rewards = rewards[::4]
-                        #log_data["singleep_all_rewards"] = rewards
-                        #logger.info(f"Single Episode rewards: {pformat(list(rewards)[::4])}")
+                        # log_data["singleep_all_rewards"] = rewards
+                        # logger.info(f"Single Episode rewards: {pformat(list(rewards)[::4])}")
                     logger.info(f"Ep reward: {log_data['episode_rewards']}")
                     logger.info(f"This ep avg reward: {log_data['avg_ep_reward']}")
                     logger.info(f"Num of collisions: {log_data['num_collisions']}")
-                    
-                    #wandb.log(log_data)
+
+                    # wandb.log(log_data)
 
                     break
 
@@ -256,7 +256,7 @@ def train(ctx, visualize, desc):
             name=filename[filename.index("/") + 1 :], type="model"
         )
         artifact.add_file(local_path=model_filename)
-        #wandb_run.log_artifact(artifact)
+        # wandb_run.log_artifact(artifact)
 
         # Record
         # ctx.invoke(
@@ -279,7 +279,9 @@ def train(ctx, visualize, desc):
 
         output = ray.get(task_handles)
         if cfg["eps_num"] == 1:
-            filename = get_logging_conf("ad_train", suffix="singlep_rewards")["handlers"]["r_file"]["filename"]
+            filename = get_logging_conf("ad_train", suffix="singlep_rewards")[
+                "handlers"
+            ]["r_file"]["filename"]
             with open(f"{filename}.json", "w") as f:
                 json.dump(output, f)
         else:

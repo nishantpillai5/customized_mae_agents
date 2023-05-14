@@ -29,15 +29,13 @@ cfg = {
     "tau": 0.009820318016914437,
     # Non-HPO
     "strats": ["random", "evasive", "hiding", "shifty", "multiple"],
-    "ray_batches": 10,
+    "ray_batches": 100,
     # long_time test
-    #"eps_num": 100,
-    #"max_cycles": 1000,
-
+    # "eps_num": 100,
+    # "max_cycles": 1000,
     # mid_time test
-    #"eps_num": 12,
-    #"max_cycles": 500,
-    
+    # "eps_num": 12,
+    # "max_cycles": 500,
     # play_time test
     "eps_num": 1,
     "max_cycles": 5000,
